@@ -47,7 +47,7 @@ class OpenDeviceDialog(wx.Dialog):
     
 
     def getSerialPortList(self):
-        ports = serial.tools.list_ports.comports()
+        ports = list(serial.tools.list_ports.comports())
         devs = []
         for p in reversed(ports):
             devs.append(p[0])
