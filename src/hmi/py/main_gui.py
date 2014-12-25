@@ -24,7 +24,7 @@ class RootFrame(wx.Frame):
         self.deviceManager = deviceManagerPanel.DeviceManagerPanel(self) 
         self.Show()
 
-        self.openPort(serial.Serial('/dev/ttyUSB0', 9600, timeout = 1))
+        #self.openPort(serial.Serial('/dev/ttyUSB0', 9600, timeout = 1))
 
 
     def onOpenDevice(self, event):

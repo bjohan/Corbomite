@@ -97,8 +97,7 @@ class CorbomiteGuiWidgetTraceIn(CorbomiteGuiWidget):
         dc.DrawLine(50,60,190,60)
         a = self.GetSize()
         dc.DrawLine(0,0,a[0],a[1])
-        self.Refresh()
-        print a
+        #self.Refresh()
         
 types[corbomiteWidgets.TraceInWidget] = CorbomiteGuiWidgetTraceIn
 

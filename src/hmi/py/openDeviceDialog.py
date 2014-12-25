@@ -41,7 +41,7 @@ class OpenDeviceDialog(wx.Dialog):
 
     def onOpen(self, fooEvent):
         print "Opening", self.serialCombo.GetValue()
-        self.port = serial.Serial('/dev/ttyUSB0', 9600, timeout = 1)
+        self.port = serial.Serial(self.serialCombo.GetValue(), 9600, timeout = 1)
         #self.corbomiteDevice = corbomiteDevice.CorbomiteDevice(port)
         self.EndModal(wx.ID_OK)
     
