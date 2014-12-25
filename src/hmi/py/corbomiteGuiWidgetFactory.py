@@ -1,8 +1,6 @@
 import corbomiteWidgets
 import wx
 
-import matplotlib
-from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg as FigureCanvas
 types = {}
 
 class CorbomiteGuiWidget(wx.Panel):
