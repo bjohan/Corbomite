@@ -83,19 +83,21 @@ types[corbomiteWidgets.AnalogInWidget] = CorbomiteGuiWidgetAnalogIn
 class CorbomiteGuiWidgetTraceIn(CorbomiteGuiWidget):
     def __init__(self, parent, widget):
         CorbomiteGuiWidget.__init__(self, parent, widget)
-        #wx.FutureCall(200, self.drawLine)
         self.Bind(wx.EVT_PAINT, self.drawLine)
-        #self.figure = matplotlib.figure.Figure()
-        #self.axes = self.figure.add_subplot(111)
-        #self.canvas = FigureCanvas(self, -1, self.figure)
+        self.Bind(wx.EVT_SIZE, self.sizeEvent)
         self.yWeight=15
+
+    def sizeEvent(self, evt):
+        self.Refresh()
 
     def drawLine(self, evt):
         dc = wx.ClientDC(self);
+        dc.Clear()
         dc.DrawLine(50,60,190,60)
         a = self.GetSize()
         dc.DrawLine(0,0,a[0],a[1])
-        #self.Refresh()
+        print "Drawing"
+        self.Layout()
         
 types[corbomiteWidgets.TraceInWidget] = CorbomiteGuiWidgetTraceIn
 

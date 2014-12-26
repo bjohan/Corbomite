@@ -5,7 +5,7 @@ import openDeviceDialog
 import corbomiteDevice
 import devicePanel
 import serial
-
+import sys
 class RootFrame(wx.Frame):
     def __init__(self):
         wx.Frame.__init__(self, None, wx.ID_ANY,
@@ -23,7 +23,9 @@ class RootFrame(wx.Frame):
         self.SetMenuBar(menuBar)
         self.deviceManager = deviceManagerPanel.DeviceManagerPanel(self) 
         self.Show()
-
+	if len(sys.argv) > 1:
+		for p in sys.argv[1:]:
+			self.openPort(serial.Serial(p, 9600, timeout = 1))
         #self.openPort(serial.Serial('/dev/ttyUSB0', 9600, timeout = 1))
 
 

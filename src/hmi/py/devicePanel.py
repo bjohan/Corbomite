@@ -14,38 +14,22 @@ class DevicePanel(wx.Panel):
         self.sizer = wx.BoxSizer(wx.VERTICAL)
         self.SetSizer(self.sizer)
         self.widgets = {}
+        self.parent = parent
         self.myInitEvent, self.EVT_MY_INIT_EVENT = wx.lib.newevent.NewEvent()
         self.Bind(self.EVT_MY_INIT_EVENT, self.receiveInitEvent)
-
+        self.parent.Layout()
 
     def receiveInitEvent(self, evt):
         widget = evt.attr1
         new = corbomiteGuiWidgetFactory.createWidget(self, widget);
         if new is not None: 
-            print new.yWeight
             self.sizer.Add(new, new.yWeight, wx.GROW)
-            self.SetSizerAndFit(self.sizer)
-            self.Show()
-        
-    def initSubscriber(self):
-        new = corbomiteGuiWidgetFactory.createWidget(self, widget);
-        if new is not None: 
-            print new.yWeight
-            self.sizer.Add(new, new.yWeight, wx.GROW)
-            self.SetSizerAndFit(self.sizer)
-            self.Show()
-
-
+            self.parent.Layout()
+            
     def initCallback(self, widget):
         evt = self.myInitEvent(attr1=widget)
         wx.PostEvent(self.GetEventHandler(), evt)
         pass
-        #new = corbomiteGuiWidgetFactory.createWidget(self, widget);
-        #if new is not None: 
-        #    print new.yWeight
-        #    self.sizer.Add(new, new.yWeight, wx.GROW)
-        #    self.SetSizerAndFit(self.sizer)
-        #    self.Show()
 
     def receiveCallback(self, data):
         pass
