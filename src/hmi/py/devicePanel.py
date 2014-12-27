@@ -24,7 +24,8 @@ class DevicePanel(wx.Panel):
         new = corbomiteGuiWidgetFactory.createWidget(self, widget);
         if new is not None: 
             self.sizer.Add(new, new.yWeight, wx.GROW)
-            self.parent.Layout()
+	    self.sizer.Layout()
+            
             
     def initCallback(self, widget):
         evt = self.myInitEvent(attr1=widget)

@@ -1,5 +1,6 @@
 import corbomiteWidgets
 import wx
+import random
 
 types = {}
 
@@ -83,20 +84,32 @@ types[corbomiteWidgets.AnalogInWidget] = CorbomiteGuiWidgetAnalogIn
 class CorbomiteGuiWidgetTraceIn(CorbomiteGuiWidget):
     def __init__(self, parent, widget):
         CorbomiteGuiWidget.__init__(self, parent, widget)
-        self.Bind(wx.EVT_PAINT, self.drawLine)
+        self.Bind(wx.EVT_PAINT, self.onPaint)
         self.Bind(wx.EVT_SIZE, self.sizeEvent)
         self.yWeight=15
 
-    def sizeEvent(self, evt):
-        self.Refresh()
+        for i in range(1000):
+            self.x = i;
+            self.y = (random.random()-0.5)*10
 
-    def drawLine(self, evt):
-        dc = wx.ClientDC(self);
+    def sizeEvent(self, evt):
+        pass#self.Refresh()
+
+    def onPaint(self, evt):
+        print "Drawing"
+        dc = wx.PaintDC(self)
+        dc = wx.ClientDC(self)
+        self.render(dc)
+
+    def render(self, dc):
+        c = wx.Colour(255,255,255)
+
+        brush = wx.Brush(c, wx.SOLID)
+        dc.SetBackground(brush)
         dc.Clear()
         dc.DrawLine(50,60,190,60)
         a = self.GetSize()
         dc.DrawLine(0,0,a[0],a[1])
-        print "Drawing"
         self.Layout()
         
 types[corbomiteWidgets.TraceInWidget] = CorbomiteGuiWidgetTraceIn
