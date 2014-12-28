@@ -87,10 +87,14 @@ class CorbomiteGuiWidgetTraceIn(CorbomiteGuiWidget):
         self.Bind(wx.EVT_PAINT, self.onPaint)
         self.Bind(wx.EVT_SIZE, self.sizeEvent)
         self.yWeight=15
-
+        self.x = []
+        self.y = []
+        self.pixelsPerGraticuleLine = 10
         for i in range(1000):
-            self.x = i;
-            self.y = (random.random()-0.5)*10
+            self.x.append(i);
+            self.y.append((random.random()-0.5)*10)
+        self.xAxis = (min(self.x), max(self.x))
+        self.yAxis = (min(self.y), max(self.y))
 
     def sizeEvent(self, evt):
         pass#self.Refresh()
@@ -101,12 +105,36 @@ class CorbomiteGuiWidgetTraceIn(CorbomiteGuiWidget):
         dc = wx.ClientDC(self)
         self.render(dc)
 
+
+    def findClosest125(self, value):
+        tens = 0
+        while True:
+            for m in [1, 2, 5]:
+                f = (10**tens)*m
+                if f > value:
+                    return f
+            tens+=1
+
+
+    def getGraticuleResolution(self, axisRange, axisSize):
+        maxGraticuleLines = axisSize/self.pixelsPerGraticuleLine
+        firstGuess = axisRange/maxGraticuleLines
+        s = self.findClosest125(firstGuess)
+
+    def drawScale(self, dc):
+        xdiff = self.xAxis[1] - self.xAxis[0]
+        ydiff = self.yAxis[1] - self.yAxis[0]
+        print "dx", xdiff, "dy", ydiff
+        (winx, winy) = self.GetSize()
+        self.getGraticuleResolution(xdiff, winx)
+        print winx, winy
+
     def render(self, dc):
         c = wx.Colour(255,255,255)
-
         brush = wx.Brush(c, wx.SOLID)
         dc.SetBackground(brush)
         dc.Clear()
+        self.drawScale(dc)
         dc.DrawLine(50,60,190,60)
         a = self.GetSize()
         dc.DrawLine(0,0,a[0],a[1])
