@@ -97,6 +97,18 @@ CorbomiteWidget.registerCorbomiteWidgetType('dout', DigitalOutWidget)
 class TraceInWidget(CorbomiteWidget):
     def __init__(self, frame, parentDevice):
         CorbomiteWidget.__init__(self, frame, parentDevice)
+        self.trace = []
+        self.x = None
+        self.y = None
+
+    def readEvent(self, line):
+        tokens = line.split()
+        self.x = int(tokens[1])
+        self.y = int(tokens[2])
+        if len(self.trace) > 0:
+            if self.trace[-1][0] > self.x:
+                self.trace = []
+        self.trace.append((self.x,self.y))
 
 CorbomiteWidget.registerCorbomiteWidgetType('tin', TraceInWidget)
 

@@ -2,6 +2,7 @@ import corbomiteWidgets
 import wx
 import random
 import math
+import time
 
 types = {}
 
@@ -85,14 +86,14 @@ types[corbomiteWidgets.AnalogInWidget] = CorbomiteGuiWidgetAnalogIn
 class CorbomiteGuiWidgetTraceIn(CorbomiteGuiWidget):
     def __init__(self, parent, widget):
         CorbomiteGuiWidget.__init__(self, parent, widget)
-        self.ctrlPressed = False
+        self.rightPressed = False
         self.leftPressed = False
         self.Bind(wx.EVT_LEFT_DCLICK, self.onDoubleClick)
         self.Bind(wx.EVT_LEFT_UP, self.onLeftUp)
         self.Bind(wx.EVT_MOTION, self.onMotion)
-        self.Bind(wx.EVT_KEY_DOWN, self.onKeyDown)
+        self.Bind(wx.EVT_RIGHT_DOWN, self.onRightDown)
+        self.Bind(wx.EVT_RIGHT_UP, self.onRightUp)
         self.Bind(wx.EVT_LEFT_DOWN, self.onLeftDown)
-        self.Bind(wx.EVT_KEY_UP, self.onKeyUp)
         self.Bind(wx.EVT_PAINT, self.onPaint)
         self.Bind(wx.EVT_SIZE, self.sizeEvent)
         self.Bind(wx.EVT_MOUSEWHEEL, self.onMouseWheel)
@@ -105,6 +106,28 @@ class CorbomiteGuiWidgetTraceIn(CorbomiteGuiWidget):
             self.x.append(float(i));
             self.y.append(math.sin(float(i)/100.0))
         self.autoScale()
+        self.widget.addCallback(self.update)
+        self.timer = wx.Timer(self)
+        self.Bind(wx.EVT_TIMER, self.onTimer, self.timer)
+        self.timer.Start(200)
+        self.time = time.time()
+        print "Time", self.time
+
+    def onTimer(self, evt):
+        if time.time() > self.time:
+            self.time = time.time()
+            self.onPaint(evt)
+
+    def update(self, widget):
+        if len(widget.trace) == 0:
+            self.onPaint(None)
+        self.x = []
+        self.y = []
+       
+        for p in widget.trace:
+            self.x.append(p[0])
+            self.y.append(p[1])
+        self.time = time.time()
 
     def autoScale(self):
         self.xMin = min(self.x)
@@ -139,13 +162,11 @@ class CorbomiteGuiWidgetTraceIn(CorbomiteGuiWidget):
         self.autoScale()
         self.onPaint(evt)          
 
-    def onKeyDown(self, evt):
-        if evt.GetKeyCode() == wx.WXK_CONTROL:
-            self.ctrlPressed = True
+    def onRightDown(self, evt):
+        self.rightPressed = True
      
-    def onKeyUp(self, evt):
-        if evt.GetKeyCode() == wx.WXK_CONTROL:
-            self.ctrlPressed = False
+    def onRightUp(self, evt):
+        self.rightPressed = False
      
     def zoomYScale(self, factor):
         center = 0.5*(self.yMin+self.yMax)
@@ -163,12 +184,12 @@ class CorbomiteGuiWidgetTraceIn(CorbomiteGuiWidget):
 
     def onMouseWheel(self, evt):
         if evt.GetWheelRotation() < 0:
-            if self.ctrlPressed:
+            if self.rightPressed:
                 self.zoomXScale(1.1)
             else:
                 self.zoomYScale(1.1)
         else:
-            if self.ctrlPressed:
+            if self.rightPressed:
                 self.zoomXScale(1/1.1)
             else:
                 self.zoomYScale(1/1.1)
@@ -200,13 +221,14 @@ class CorbomiteGuiWidgetTraceIn(CorbomiteGuiWidget):
         (winx, winy) = self.GetSize();
         pixelsPerUnit = winx/(self.xMax-self.xMin)
         xPixels = (x-self.xMin)*pixelsPerUnit
-        return xPixels
+        
+        return max(min(xPixels, winx+1), -1)
         
     def yAxisToPixels(self, y):
         (winx, winy) = self.GetSize();
         pixelsPerUnit = winy/(self.yMax-self.yMin)
         yPixels = winy-(y-self.yMin)*pixelsPerUnit
-        return yPixels
+        return max(min(yPixels, winy+1), -1)
 
     def computeScale(self, axisMax, axisMin, axisLengthInPixels):
         axisMax = float(axisMax)
