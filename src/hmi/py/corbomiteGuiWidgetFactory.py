@@ -55,17 +55,28 @@ class CorbomiteGuiWidgetEventOut(CorbomiteGuiWidget):
         self.widget.writeValue(None)
 types[corbomiteWidgets.EventOutWidget] = CorbomiteGuiWidgetEventOut
 
+
 class CorbomiteGuiWidgetAnalogOut(CorbomiteGuiWidget):
     def __init__(self, parent, widget):
         CorbomiteGuiWidget.__init__(self, parent, widget)
         self.slider = wx.Slider(self, wx.ID_ANY, widget.minValue,widget.minValue, widget.maxValue)
         self.slider.Bind(wx.EVT_SLIDER, self.OnSlide)
         self.label = wx.StaticText(self, label = self.widget.name)
+        self.spinner = wx.SpinCtrl(self, value = str(widget.minValue), min = widget.minValue, max = widget.maxValue)
+        self.spinner.Bind(wx.EVT_SPIN, self.onSpin)
+        self.spinner.Bind(wx.EVT_TEXT, self.onSpin)
         self.sizer.Add(self.label,1)
+        self.sizer.Add(self.spinner,1)
         self.sizer.Add(self.slider, 3)
     
+    def onSpin(self, e):
+        self.slider.SetValue(self.spinner.GetValue())
+        self.widget.writeValue(self.spinner.GetValue())
+    
     def OnSlide(self, e):
+        self.spinner.SetValue(self.slider.GetValue())
         self.widget.writeValue(self.slider.GetValue())
+
 types[corbomiteWidgets.AnalogOutWidget] = CorbomiteGuiWidgetAnalogOut
 
 class CorbomiteGuiWidgetAnalogIn(CorbomiteGuiWidget):
@@ -111,7 +122,6 @@ class CorbomiteGuiWidgetTraceIn(CorbomiteGuiWidget):
         self.Bind(wx.EVT_TIMER, self.onTimer, self.timer)
         self.timer.Start(200)
         self.time = time.time()
-        print "Time", self.time
 
     def onTimer(self, evt):
         if time.time() > self.time:
@@ -123,7 +133,6 @@ class CorbomiteGuiWidgetTraceIn(CorbomiteGuiWidget):
             self.onPaint(None)
         self.x = []
         self.y = []
-       
         for p in widget.trace:
             self.x.append(p[0])
             self.y.append(p[1])
@@ -201,7 +210,7 @@ class CorbomiteGuiWidgetTraceIn(CorbomiteGuiWidget):
 
     def onPaint(self, evt):
         dc = wx.PaintDC(self)
-        self.render(dc)
+        self.render(wx.BufferedDC(dc))
 
     def findClosest125(self, value):
         tens = -20
