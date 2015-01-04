@@ -1,3 +1,34 @@
+class CorbomiteValue:
+    def __init__(self, unit, minUnit, maxUnit, minRaw, maxRaw):
+        self.unit = unit
+        self.minUnit = float(minUnit)
+        self.maxUnit = float(maxUnit)
+        self.minRaw = float(minRaw)
+        self.maxRaw = float(maxRaw)
+        self.unitsPerRaw = (self.maxUnit - self.minUnit)/(self.maxRaw - self.minRaw)
+        self.rawValue = None
+
+    def setRaw(self, raw):
+        self.rawValue = raw
+
+    def setUnit(self, unit):
+        self.rawValue = self.toRaw(unit)
+
+    def getRaw(self):
+        return self.rawValue
+
+    def getUnit(self):
+        return self.toUnit(self.rawValue)
+
+    def toUnit(self, raw):
+        return self.minUnit + (raw-self.minRaw)*self.unitsPerRaw
+
+    def toRaw(self, unit):
+        return (unit-self.minUnit)/self.unitsPerRaw + self.minRaw
+
+    def getUnitString(self):
+        return str(self.getUnit())+' '+self.unit
+
 class CorbomiteWidget:
     types = {}
 
@@ -18,7 +49,7 @@ class CorbomiteWidget:
         self.parentDevice = parentDevice
         self.parentDevice.widgets[self.name] = self
         self.callBacks = []
-        self.value = None
+        #self.value = None
 
 
     def process(self, line):
@@ -38,19 +69,23 @@ class CorbomiteWidget:
         for c in self.callBacks:
             c(value)
 
+
 class AnalogInWidget(CorbomiteWidget):
     def __init__(self, frame, parentDevice):
         toks = frame.split()
-        self.name = toks[1]
-        self.unit = toks[2]
-        self.minUnit = toks[3]
-        self.maxUnit = toks[4]
-        self.minValue = int(toks[5])
-        self.maxValue = int(toks[6])
+        self.value = CorbomiteValue(toks[2], toks[3], toks[4], toks[5], toks[6])
+        print "Created value", self.value
+        #self.name = toks[1]
+        #self.unit = toks[2]
+        #self.minUnit = toks[3]
+        #self.maxUnit = toks[4]
+        #self.minRaw = int(toks[5])
+        #self.maxRaw = int(toks[6])
+        #self.unitConverter = UnitConverter(self.unit, self.minUnit, self.maxUnit, self.minRaw, self.maxRaw)
         CorbomiteWidget.__init__(self, frame, parentDevice)
 
     def readEvent(self, line):
-        self.value = int(line.split()[1])
+        self.value.setRaw(int(line.split()[1]))
 
 CorbomiteWidget.registerCorbomiteWidgetType('ain', AnalogInWidget)
 
@@ -62,8 +97,8 @@ class AnalogOutWidget(CorbomiteWidget):
         self.unit = toks[2]
         self.minUnit = toks[3]
         self.maxUnit = toks[4]
-        self.minValue = int(toks[5])
-        self.maxValue = int(toks[6])
+        self.minRaw = int(toks[5])
+        self.maxRaw = int(toks[6])
         CorbomiteWidget.__init__(self, frame, parentDevice)
 
     def writeValue(self, value):

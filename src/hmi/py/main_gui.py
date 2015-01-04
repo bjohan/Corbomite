@@ -11,8 +11,8 @@ class RootFrame(wx.Frame):
         wx.Frame.__init__(self, None, wx.ID_ANY,
                           "Corbomite",
                           size=(600,800))
-	self.icon = wx.Icon('corbomite.png', wx.BITMAP_TYPE_ANY)
-	wx.Frame.SetIcon(self, self.icon)
+        self.icon = wx.Icon('corbomite.png', wx.BITMAP_TYPE_ANY)
+        wx.Frame.SetIcon(self, self.icon)
         menuBar = wx.MenuBar()
         menu = wx.Menu()
         menuBar.Append(menu, "&File")
@@ -23,9 +23,9 @@ class RootFrame(wx.Frame):
         self.SetMenuBar(menuBar)
         self.deviceManager = deviceManagerPanel.DeviceManagerPanel(self) 
         self.Show()
-	if len(sys.argv) > 1:
-		for p in sys.argv[1:]:
-			self.openPort(serial.Serial(p, 9600, timeout = 1))
+        if len(sys.argv) > 1:
+		    for p in sys.argv[1:]:
+			    self.openPort(serial.Serial(p, 9600, timeout = 1))
         #self.openPort(serial.Serial('/dev/ttyUSB0', 9600, timeout = 1))
 
 

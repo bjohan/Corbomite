@@ -59,10 +59,10 @@ types[corbomiteWidgets.EventOutWidget] = CorbomiteGuiWidgetEventOut
 class CorbomiteGuiWidgetAnalogOut(CorbomiteGuiWidget):
     def __init__(self, parent, widget):
         CorbomiteGuiWidget.__init__(self, parent, widget)
-        self.slider = wx.Slider(self, wx.ID_ANY, widget.minValue,widget.minValue, widget.maxValue)
+        self.slider = wx.Slider(self, wx.ID_ANY, widget.minRaw,widget.minRaw, widget.maxRaw)
         self.slider.Bind(wx.EVT_SLIDER, self.OnSlide)
         self.label = wx.StaticText(self, label = self.widget.name)
-        self.spinner = wx.SpinCtrl(self, value = str(widget.minValue), min = widget.minValue, max = widget.maxValue)
+        self.spinner = wx.SpinCtrl(self, value = str(widget.minRaw), min = widget.minRaw, max = widget.maxRaw)
         self.spinner.Bind(wx.EVT_SPIN, self.onSpin)
         self.spinner.Bind(wx.EVT_TEXT, self.onSpin)
         self.sizer.Add(self.label,1)
@@ -82,14 +82,15 @@ types[corbomiteWidgets.AnalogOutWidget] = CorbomiteGuiWidgetAnalogOut
 class CorbomiteGuiWidgetAnalogIn(CorbomiteGuiWidget):
     def __init__(self, parent, widget):
         CorbomiteGuiWidget.__init__(self, parent, widget)
-        self.gauge = wx.Gauge(self, wx.ID_ANY, widget.maxValue - widget.minValue)
+        self.gauge = wx.Gauge(self, wx.ID_ANY, widget.value.maxRaw - widget.value.minRaw)
         widget.addCallback(self.update)
         self.label = wx.StaticText(self, label = self.widget.name)
         self.sizer.Add(self.label,1)
         self.sizer.Add(self.gauge, 3)
 
     def update(self, widget):
-        self.gauge.SetValue(widget.value)
+        self.gauge.SetValue(widget.value.getRaw())
+        self.label.SetLabel(self.widget.name+' '+self.widget.value.getUnitString())
         wx.Yield()
 
 types[corbomiteWidgets.AnalogInWidget] = CorbomiteGuiWidgetAnalogIn
@@ -126,11 +127,11 @@ class CorbomiteGuiWidgetTraceIn(CorbomiteGuiWidget):
     def onTimer(self, evt):
         if time.time() > self.time:
             self.time = time.time()
-            self.onPaint(evt)
+            self.rePaint()
 
     def update(self, widget):
         if len(widget.trace) == 0:
-            self.onPaint(None)
+            self.rePaint()
         self.x = []
         self.y = []
         for p in widget.trace:
@@ -160,7 +161,7 @@ class CorbomiteGuiWidgetTraceIn(CorbomiteGuiWidget):
             self.yMax+=dy
             self.xMin+=dx
             self.yMin+=dy
-            self.onPaint(evt)
+            self.rePaint()
             self.lastCoords = (evt.GetX(), evt.GetY())
 
     def onLeftUp(self,evt):
@@ -169,7 +170,7 @@ class CorbomiteGuiWidgetTraceIn(CorbomiteGuiWidget):
 
     def onDoubleClick(self, evt):
         self.autoScale()
-        self.onPaint(evt)          
+        self.rePaint()          
 
     def onRightDown(self, evt):
         self.rightPressed = True
@@ -202,11 +203,14 @@ class CorbomiteGuiWidgetTraceIn(CorbomiteGuiWidget):
                 self.zoomXScale(1/1.1)
             else:
                 self.zoomYScale(1/1.1)
-        self.onPaint(evt)            
+        self.rePaint()            
         
 
     def sizeEvent(self, evt):
         self.Refresh()
+
+    def rePaint(self):
+        self.render(wx.BufferedDC(wx.ClientDC(self)))
 
     def onPaint(self, evt):
         dc = wx.PaintDC(self)
