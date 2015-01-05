@@ -1,20 +1,42 @@
 import math
 
+def calculatePrefix(value):
+        if abs(value) <1e-21:
+            return (0, '')
+        decades = math.log10(abs(value))
+        prefNum = int(decades)/3;
+        prefix = 'afnpum KMGTPY'[prefNum+6]
+        return (prefNum, prefix)
+
+def prefixLetter(prefNum):
+        return 'afnpum KMGTPY'[prefNum+6]
+
+def calculatePrefixMultiplier(prefix):
+        return 10**(('afnpum KMGTPY'.index(prefix)-6)*3)
+
+def stringToValue(st):
+        i = 0
+        for s in st:
+            i += 1
+            if s not in ['1', '2', '3', '4', '5', '7', '8', '9', '0', '.', ',']:
+                 break
+        number = st[0:i-1]
+        p = st[i-1:].strip()[0]
+        print number, p, calculatePrefixMultiplier(p)
+        return float(number)*calculatePrefixMultiplier(p)
+
 class CorbomiteValue:
     def __init__(self, unit, minUnit, maxUnit, minRaw, maxRaw):
         self.unit = unit
-        try:
-            self.minUnit = float(minUnit)
-        except E:
-            print E
+        self.minUnit = float(minUnit)
         self.maxUnit = float(maxUnit)
         self.minRaw = float(minRaw)
         self.maxRaw = float(maxRaw)
         self.unitsPerRaw = (self.maxUnit - self.minUnit)/(self.maxRaw - self.minRaw)
-        self.rawValue = None
+        self.rawValue = self.minRaw
 
     def getPrecisionString(self, value, precision):
-        if value == 0:
+        if abs(value) <1e-21:
             return "0 "+self.unit
         decades = math.log10(abs(value))
         prefNum = int(decades)/3;
@@ -33,7 +55,7 @@ class CorbomiteValue:
         self.rawValue = self.toRaw(unit)
 
     def getRaw(self):
-        return self.rawValue
+        return int(self.rawValue)
 
     def getUnit(self):
         return self.toUnit(self.rawValue)
@@ -42,7 +64,7 @@ class CorbomiteValue:
         return self.minUnit + (raw-self.minRaw)*self.unitsPerRaw
 
     def toRaw(self, unit):
-        return (unit-self.minUnit)/self.unitsPerRaw + self.minRaw
+        return round((unit-self.minUnit)/self.unitsPerRaw + self.minRaw)
 
     def getUnitString(self):
         return str(self.getUnit())+' '+self.unit
@@ -74,7 +96,8 @@ class CorbomiteWidget:
         self.callCallbacks(self)
 
     def setValue(self, value):
-        self.writeValue(value)
+        self.value.setUnit(value)
+        self.writeValue(self.value.getRaw())
 
     def readEvent(self, line):
         print self.__class__.__name__, "does not have a an event handler so:", line, "is unprocessed"
@@ -90,15 +113,6 @@ class CorbomiteWidget:
 class AnalogInWidget(CorbomiteWidget):
     def __init__(self, frame, parentDevice):
         toks = frame.split()
-        #self.value = CorbomiteValue(toks[2], toks[3], toks[4], toks[5], toks[6])
-        #print "Created value", self.value
-        #self.name = toks[1]
-        #self.unit = toks[2]
-        #self.minUnit = toks[3]
-        #self.maxUnit = toks[4]
-        #self.minRaw = int(toks[5])
-        #self.maxRaw = int(toks[6])
-        #self.unitConverter = UnitConverter(self.unit, self.minUnit, self.maxUnit, self.minRaw, self.maxRaw)
         CorbomiteWidget.__init__(self, frame, parentDevice, 
                         CorbomiteValue(toks[2], toks[3], toks[4], toks[5], toks[6]))
 
@@ -111,12 +125,6 @@ CorbomiteWidget.registerCorbomiteWidgetType('ain', AnalogInWidget)
 class AnalogOutWidget(CorbomiteWidget):
     def __init__(self, frame, parentDevice):
         toks = frame.split()
-        #self.name = toks[1]
-        #self.unit = toks[2]
-        #self.minUnit = toks[3]
-        #self.maxUnit = toks[4]
-        #self.minRaw = int(toks[5])
-        #self.maxRaw = int(toks[6])
         CorbomiteWidget.__init__(self, frame, parentDevice,
                         CorbomiteValue(toks[2], toks[3], toks[4], toks[5], toks[6]))
 
@@ -187,6 +195,10 @@ CorbomiteWidget.registerCorbomiteWidgetType('ein', EventInWidget)
 class EventOutWidget(CorbomiteWidget):
     def __init__(self, frame, parentDevice):
         CorbomiteWidget.__init__(self, frame, parentDevice,CorbomiteValue('event',0,1,0,1))
+
+    def setValue(self, value):
+        self.writeValue(None)
+
     def writeValue(self, value):
         self.parentDevice.write(self.name)
 
