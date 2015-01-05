@@ -59,10 +59,10 @@ types[corbomiteWidgets.EventOutWidget] = CorbomiteGuiWidgetEventOut
 class CorbomiteGuiWidgetAnalogOut(CorbomiteGuiWidget):
     def __init__(self, parent, widget):
         CorbomiteGuiWidget.__init__(self, parent, widget)
-        self.slider = wx.Slider(self, wx.ID_ANY, widget.minRaw,widget.minRaw, widget.maxRaw)
+        self.slider = wx.Slider(self, wx.ID_ANY, widget.value.minRaw,widget.value.minRaw, widget.value.maxRaw)
         self.slider.Bind(wx.EVT_SLIDER, self.OnSlide)
         self.label = wx.StaticText(self, label = self.widget.name)
-        self.spinner = wx.SpinCtrl(self, value = str(widget.minRaw), min = widget.minRaw, max = widget.maxRaw)
+        self.spinner = wx.SpinCtrl(self, value = str(widget.value.minRaw), min = widget.value.minRaw, max = widget.value.maxRaw)
         self.spinner.Bind(wx.EVT_SPIN, self.onSpin)
         self.spinner.Bind(wx.EVT_TEXT, self.onSpin)
         self.sizer.Add(self.label,1)
@@ -70,12 +70,15 @@ class CorbomiteGuiWidgetAnalogOut(CorbomiteGuiWidget):
         self.sizer.Add(self.slider, 3)
     
     def onSpin(self, e):
+        print self.widget.value.getPrecisionString(float(self.spinner.GetValue()), 5)
         self.slider.SetValue(self.spinner.GetValue())
         self.widget.writeValue(self.spinner.GetValue())
+        self.label.SetLabel(self.widget.name+' '+self.widget.value.getPrecisionString(float(self.spinner.GetValue()), 5))
     
     def OnSlide(self, e):
         self.spinner.SetValue(self.slider.GetValue())
         self.widget.writeValue(self.slider.GetValue())
+        #self.label.SetLabel(self.widget.value.getValueString())
 
 types[corbomiteWidgets.AnalogOutWidget] = CorbomiteGuiWidgetAnalogOut
 
@@ -90,7 +93,7 @@ class CorbomiteGuiWidgetAnalogIn(CorbomiteGuiWidget):
 
     def update(self, widget):
         self.gauge.SetValue(widget.value.getRaw())
-        self.label.SetLabel(self.widget.name+' '+self.widget.value.getUnitString())
+        self.label.SetLabel(self.widget.name+' '+self.widget.value.getValueString())
         wx.Yield()
 
 types[corbomiteWidgets.AnalogInWidget] = CorbomiteGuiWidgetAnalogIn
