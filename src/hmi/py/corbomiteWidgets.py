@@ -14,6 +14,8 @@ class CorbomiteValue:
         self.rawValue = None
 
     def getPrecisionString(self, value, precision):
+        if value == 0:
+            return "0 "+self.unit
         decades = math.log10(abs(value))
         prefNum = int(decades)/3;
         prefix = 'afnpum KMGTPY'[prefNum+6]

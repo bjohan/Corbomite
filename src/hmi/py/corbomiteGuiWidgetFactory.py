@@ -73,7 +73,7 @@ class CorbomiteGuiWidgetAnalogOut(CorbomiteGuiWidget):
         print self.widget.value.getPrecisionString(float(self.spinner.GetValue()), 5)
         self.slider.SetValue(self.spinner.GetValue())
         self.widget.writeValue(self.spinner.GetValue())
-        self.label.SetLabel(self.widget.name+' '+self.widget.value.getPrecisionString(float(self.spinner.GetValue()), 5))
+        self.label.SetLabel(self.widget.name+' '+self.widget.value.getPrecisionString(float(self.spinner.GetValue()), 3))
     
     def OnSlide(self, e):
         self.spinner.SetValue(self.slider.GetValue())
@@ -111,12 +111,12 @@ class CorbomiteGuiWidgetTraceIn(CorbomiteGuiWidget):
         self.Bind(wx.EVT_LEFT_DOWN, self.onLeftDown)
         self.Bind(wx.EVT_PAINT, self.onPaint)
         self.Bind(wx.EVT_SIZE, self.sizeEvent)
-        self.Bind(wx.EVT_MOUSEWHEEL, self.onMouseWheel)
+        parent.Bind(wx.EVT_MOUSEWHEEL, self.onMouseWheel)
         self.yWeight=15
         self.x = []
         self.y = []
         self.lastCoords = None
-        self.pixelsPerGraticuleLine = 30
+        self.pixelsPerGraticuleLine = 75
         for i in range(1000):
             self.x.append(float(i));
             self.y.append(math.sin(float(i)/100.0))
@@ -138,8 +138,8 @@ class CorbomiteGuiWidgetTraceIn(CorbomiteGuiWidget):
         self.x = []
         self.y = []
         for p in widget.trace:
-            self.x.append(p[0])
-            self.y.append(p[1])
+            self.x.append(self.widget.value[0].toUnit(p[0]))
+            self.y.append(self.widget.value[1].toUnit(p[1]))
         self.time = time.time()
 
     def autoScale(self):
@@ -268,11 +268,12 @@ class CorbomiteGuiWidgetTraceIn(CorbomiteGuiWidget):
         for ya in glsY:
             y = self.yAxisToPixels(ya)
             dc.DrawLine(0, y, winx, y)
-            dc.DrawText(str(ya), 0, y)
-        for xa in glsX:
+            dc.DrawText(self.widget.value[1].getPrecisionString(ya,2), 0, y)
+        for xa in glsX[1:]:
             x = self.xAxisToPixels(xa)
             dc.DrawLine(x, 0, x, winy)
-            dc.DrawText(str(xa), x, 0)
+            dc.DrawText(self.widget.value[0].getPrecisionString(xa,2), x, 0)
+            #dc.DrawText(str(xa), x, 0)
 
     def drawPlot(self, dc):
         points = zip(self.x, self.y)
