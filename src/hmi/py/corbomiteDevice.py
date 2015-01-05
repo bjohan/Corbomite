@@ -206,7 +206,7 @@ class CorbomiteDevice:
         self.writer.stop()
 
     def frameReceiver(self, frame):
-        print "Got %d bytes in frame:"%(len(frame)), frame
+        #print "Got %d bytes in frame:"%(len(frame)), frame
         if frame == 'busy':
             self.busy = True
         elif frame == 'idle':

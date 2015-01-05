@@ -167,13 +167,16 @@ class TraceInWidget(CorbomiteWidget):
         self.y = None
 
     def readEvent(self, line):
-        tokens = line.split()
-        self.x = int(tokens[1])
-        self.y = int(tokens[2])
-        if len(self.trace) > 0:
-            if self.trace[-1][0] > self.x:
-                self.trace = []
-        self.trace.append((self.x,self.y))
+        try:
+            tokens = line.split()
+            self.x = int(tokens[1])
+            self.y = int(tokens[2])
+            if len(self.trace) > 0:
+                if self.trace[-1][0] > self.x:
+                    self.trace = []
+            self.trace.append((self.x,self.y))
+        except:
+            print "Unable to parse the line", line
 
 CorbomiteWidget.registerCorbomiteWidgetType('tin', TraceInWidget)
 

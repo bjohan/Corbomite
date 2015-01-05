@@ -4,6 +4,7 @@ import random
 import math
 import time
 
+import cProfile
 types = {}
 
 class CorbomiteGuiWidget(wx.Panel):
@@ -53,30 +54,6 @@ class CorbomiteGuiWidgetEventOut(CorbomiteGuiWidget):
 types[corbomiteWidgets.EventOutWidget] = CorbomiteGuiWidgetEventOut
 
 
-#class CorbomiteGuiWidgetAnalogOut(CorbomiteGuiWidget):
-#    def __init__(self, parent, widget):
-#        CorbomiteGuiWidget.__init__(self, parent, widget)
-#        self.slider = wx.Slider(self, wx.ID_ANY, widget.value.minUnit,widget.value.minUnit, widget.value.maxUnit)
-#        self.slider.Bind(wx.EVT_SLIDER, self.OnSlide)
-#        self.label = wx.StaticText(self, label = self.widget.name)
-#        self.spinner = wx.SpinCtrl(self, value = str(widget.value.minUnit), min = widget.value.minUnit, max = widget.value.maxUnit)
-#        self.spinner.Bind(wx.EVT_SPIN, self.onSpin)
-#        self.spinner.Bind(wx.EVT_TEXT, self.onSpin)
-#        self.sizer.Add(self.label,1)
-#        self.sizer.Add(self.spinner,1)
-#        self.sizer.Add(self.slider, 3)
-#    
-#    def onSpin(self, e):
-#        print self.widget.value.getPrecisionString(float(self.spinner.GetValue()), 5)
-#        self.slider.SetValue(self.spinner.GetValue())
-#        self.widget.setValue(self.spinner.GetValue())
-#        self.label.SetLabel(self.widget.name+' '+self.widget.value.getPrecisionString(float(self.spinner.GetValue()), 3))
-#    
-#    def OnSlide(self, e):
-#        self.spinner.SetValue(self.slider.GetValue())
-#        self.widget.setValue(self.slider.GetValue())
-#        #self.label.SetLabel(self.widget.value.getValueString())
-
 class CorbomiteGuiWidgetAnalogOut(CorbomiteGuiWidget):
     def __init__(self, parent, widget):
         CorbomiteGuiWidget.__init__(self, parent, widget)
@@ -96,11 +73,6 @@ class CorbomiteGuiWidgetAnalogOut(CorbomiteGuiWidget):
         self.preferedPrefix, foo = corbomiteWidgets.calculatePrefix(self.widget.value.getUnit())
         self.updateValue(self.widget.value.minUnit)
         
-
-        #self.slider.Bind(wx.EVT_SLIDER, self.OnSlide)
-        #self.spinner = wx.SpinCtrl(self, value = str(widget.value.minUnit), min = widget.value.minUnit, max = widget.value.maxUnit)
-        #self.spinner.Bind(wx.EVT_SPIN, self.onSpin)
-        #self.spinner.Bind(wx.EVT_TEXT, self.onSpin)
         self.sizer.Add(self.label,4)
         self.sizer.Add(self.valueText,8)
         self.sizer.Add(self.spinX1,1)
@@ -206,7 +178,7 @@ class CorbomiteGuiWidgetTraceIn(CorbomiteGuiWidget):
         self.widget.addCallback(self.update)
         self.timer = wx.Timer(self)
         self.Bind(wx.EVT_TIMER, self.onTimer, self.timer)
-        self.timer.Start(200)
+        self.timer.Start(1000)
         self.time = time.time()
 
     def onTimer(self, evt):
@@ -361,21 +333,35 @@ class CorbomiteGuiWidgetTraceIn(CorbomiteGuiWidget):
             #dc.DrawText(str(xa), x, 0)
 
     def drawPlot(self, dc):
+        (winx, winy) = self.GetSize();
+        xpixelsPerUnit = winx/(self.xMax-self.xMin)
+        ypixelsPerUnit = winy/(self.yMax-self.yMin)
         points = zip(self.x, self.y)
         for i in range(len(points)-1):
             p1 = points[i]
             p2 = points[i+1]
-            dc.DrawLine(self.xAxisToPixels(p1[0]),self.yAxisToPixels(p1[1]),
-                        self.xAxisToPixels(p2[0]),self.yAxisToPixels(p2[1]))
+            x1 = min((p1[0]-self.xMin)*xpixelsPerUnit, winx+1)
+            y1 = min(winy-(p1[1]-self.yMin)*ypixelsPerUnit, winy+1)
+            x2 = min((p2[0]-self.xMin)*xpixelsPerUnit, winx+1)
+            y2 = min(winy-(p2[1]-self.yMin)*ypixelsPerUnit, winy+1)
+            
+            dc.DrawLine(x1,y1,x2,y2)
+            #dc.DrawLine((p1[0]-self.xMin)*xpixelsPerUnit,winy-(p1[1]-self.yMin)*ypixelsPerUnit,
+            #            (p2[0]-self.xMin)*xpixelsPerUnit,winy-(p2[1]-self.yMin)*ypixelsPerUnit)
             
     def render(self, dc):
+        #print "Rendering"
         c = wx.Colour(255,255,255)
         brush = wx.Brush(c, wx.SOLID)
         dc.SetBackground(brush)
         dc.Clear()
+        #p = cProfile.Profile()
+
+        #p.enable()
         self.drawScale(dc)
         self.drawPlot(dc)
-        
+        #p.disable()
+        #p.print_stats()
 types[corbomiteWidgets.TraceInWidget] = CorbomiteGuiWidgetTraceIn
 
 def createWidget(parent, widget):
