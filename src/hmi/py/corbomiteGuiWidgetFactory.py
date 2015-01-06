@@ -10,10 +10,21 @@ types = {}
 class CorbomiteGuiWidget(wx.Panel):
     def __init__(self, parent, widget):
         wx.Panel.__init__(self, parent = parent)
+        self.myInitEvent, self.EVT_MY_INIT_EVENT = wx.lib.newevent.NewEvent()
+        self.Bind(self.EVT_MY_INIT_EVENT, self.update)
         self.widget = widget
+        self.widget.addCallback(self.callbackToEventTranslator)
         self.sizer = wx.BoxSizer(wx.HORIZONTAL)
         self.SetSizer(self.sizer)
         self.yWeight = 1
+
+    def callbackToEventTranslator(self, widget):
+        evt = self.myInitEvent(attr1=widget)
+        wx.PostEvent(self.GetEventHandler(), evt)
+
+    def update(self, event):
+        print "The gui widget for", self.widget.name, "has no handler so event is skipped"
+        
 
 class CorbomiteGuiWidgetDigitalOut(CorbomiteGuiWidget):
     def __init__(self, parent, widget):
@@ -33,10 +44,10 @@ class CorbomiteGuiWidgetDigitalIn(CorbomiteGuiWidget):
         self.box = wx.CheckBox(parent = self, label = widget.name)
         self.box.Enable(False)
         self.sizer.Add(self.box, 1)
-        widget.addCallback(self.update)
+        #widget.addCallback(self.update)
 
-    def update(self, widget):
-        if(widget.value > 0):
+    def update(self, evt):
+        if(evt.attr1.value > 0):
             self.box.SetValue(True)
         else:
             self.box.SetValue(False)
@@ -63,12 +74,15 @@ class CorbomiteGuiWidgetAnalogOut(CorbomiteGuiWidget):
         self.Bind(wx.EVT_TEXT_ENTER, self.onEnter, self.valueText)
         font = wx.Font(4, wx.DECORATIVE, wx.ITALIC, wx.NORMAL)
         self.spinX1 = wx.SpinButton(self, style=wx.SP_VERTICAL)
+        self.spinX1.SetValue(1)
         self.textX1 = wx.StaticText(self, -1, '1')
         self.textX1.SetFont(font)
         self.spinX2 = wx.SpinButton(self, style=wx.SP_VERTICAL)
+        self.spinX2.SetValue(1)
         self.textX2 = wx.StaticText(self, -1, '1\n0')
         self.textX2.SetFont(font)
         self.spinX3 = wx.SpinButton(self, style=wx.SP_VERTICAL)
+        self.spinX3.SetValue(1)
         self.textX3 = wx.StaticText(self, -1, '1\n0\n0')
         self.textX3.SetFont(font)
         self.spinUnit = wx.SpinButton(self, style=wx.SP_VERTICAL)
@@ -111,12 +125,12 @@ class CorbomiteGuiWidgetAnalogOut(CorbomiteGuiWidget):
         self.slider.SetValue(sval)
 
     def spinDelta(self, spinner):
-        if spinner.GetValue() > 0:
+        if spinner.GetValue() > 1:
             delta = 1
         else:
             delta = -1
         print "delta", delta
-        spinner.SetValue(0)
+        spinner.SetValue(1)
         return delta
 
     def onPrefixSpin(self, evt):
@@ -153,15 +167,16 @@ class CorbomiteGuiWidgetAnalogIn(CorbomiteGuiWidget):
     def __init__(self, parent, widget):
         CorbomiteGuiWidget.__init__(self, parent, widget)
         self.gauge = wx.Gauge(self, wx.ID_ANY, widget.value.maxRaw - widget.value.minRaw)
-        widget.addCallback(self.update)
+        #widget.addCallback(self.update)
         self.label = wx.StaticText(self, label = self.widget.name)
         self.sizer.Add(self.label,1)
         self.sizer.Add(self.gauge, 3)
 
-    def update(self, widget):
-        self.gauge.SetValue(widget.value.getRaw())
+    def update(self, event):
+        self.gauge.SetValue(event.attr1.value.getRaw())
         self.label.SetLabel(self.widget.name+' '+self.widget.value.getValueString())
-        wx.Yield()
+        #self.label.SetLabel(self.widget.name)
+        #wx.Yield()
 
 types[corbomiteWidgets.AnalogInWidget] = CorbomiteGuiWidgetAnalogIn
 
@@ -188,7 +203,7 @@ class CorbomiteGuiWidgetTraceIn(CorbomiteGuiWidget):
             self.x.append(float(i));
             self.y.append(math.sin(float(i)/100.0))
         self.autoScale()
-        self.widget.addCallback(self.update)
+        #self.widget.addCallback(self.update)
         self.timer = wx.Timer(self)
         self.Bind(wx.EVT_TIMER, self.onTimer, self.timer)
         self.timer.Start(1000)
@@ -199,7 +214,8 @@ class CorbomiteGuiWidgetTraceIn(CorbomiteGuiWidget):
             self.time = time.time()
             self.rePaint()
 
-    def update(self, widget):
+    def update(self, evt):
+        widget = evt.attr1
         if len(widget.trace) == 0:
             self.rePaint()
         self.x = []
