@@ -73,36 +73,37 @@ class CorbomiteGuiWidgetAnalogOut(CorbomiteGuiWidget):
         self.valueText = wx.TextCtrl(self, style = wx.TE_PROCESS_ENTER)
         self.Bind(wx.EVT_TEXT_ENTER, self.onEnter, self.valueText)
         font = wx.Font(4, wx.DECORATIVE, wx.ITALIC, wx.NORMAL)
-        self.spinX1 = wx.SpinButton(self, style=wx.SP_VERTICAL)
-        self.spinX1.SetValue(1)
-        self.textX1 = wx.StaticText(self, -1, '1')
-        self.textX1.SetFont(font)
-        self.spinX2 = wx.SpinButton(self, style=wx.SP_VERTICAL)
-        self.spinX2.SetValue(1)
-        self.textX2 = wx.StaticText(self, -1, '1\n0')
-        self.textX2.SetFont(font)
         self.spinX3 = wx.SpinButton(self, style=wx.SP_VERTICAL)
         self.spinX3.SetValue(1)
         self.textX3 = wx.StaticText(self, -1, '1\n0\n0')
         self.textX3.SetFont(font)
+        self.spinX2 = wx.SpinButton(self, style=wx.SP_VERTICAL)
+        self.spinX2.SetValue(1)
+        self.textX2 = wx.StaticText(self, -1, '1\n0')
+        self.textX2.SetFont(font)
+        self.spinX1 = wx.SpinButton(self, style=wx.SP_VERTICAL)
+        self.spinX1.SetValue(1)
+        self.textX1 = wx.StaticText(self, -1, '1')
+        self.textX1.SetFont(font)
         self.spinUnit = wx.SpinButton(self, style=wx.SP_VERTICAL)
+        self.spinUnit.SetValue(1)
         self.textUnit = wx.StaticText(self, -1, corbomiteWidgets.prefixLetter(self.preferedPrefix))
         self.Bind(wx.EVT_SPIN, self.onPrefixSpin, self.spinUnit)
-        self.Bind(wx.EVT_SPIN, self.onSpinX1, self.spinX1)
-        self.Bind(wx.EVT_SPIN, self.onSpinX2, self.spinX2)
         self.Bind(wx.EVT_SPIN, self.onSpinX3, self.spinX3)
+        self.Bind(wx.EVT_SPIN, self.onSpinX2, self.spinX2)
+        self.Bind(wx.EVT_SPIN, self.onSpinX1, self.spinX1)
         self.slider = wx.Slider(self, wx.ID_ANY, 0, 0, 1000000)
-        self.slider.Bind(wx.EVT_SLIDER, self.onSlide)
+        self.slider.Bind(wx.EVT_SCROLL, self.onSlide)
         self.updateValue(self.widget.value.minUnit)
         
         self.sizer.Add(self.label,4*3)
         self.sizer.Add(self.valueText,8*3)
-        self.sizer.Add(self.textX1,1,wx.FIXED_MINSIZE, wx.ALIGN_CENTER_VERTICAL)
-        self.sizer.Add(self.spinX1,1*3)
+        self.sizer.Add(self.textX3,1,wx.FIXED_MINSIZE, wx.ALIGN_CENTER_VERTICAL)
+        self.sizer.Add(self.spinX3,1*3)
         self.sizer.Add(self.textX2,1,wx.FIXED_MINSIZE)
         self.sizer.Add(self.spinX2,1*3)
-        self.sizer.Add(self.textX3,1,wx.FIXED_MINSIZE)
-        self.sizer.Add(self.spinX3,1*3)
+        self.sizer.Add(self.textX1,1,wx.FIXED_MINSIZE)
+        self.sizer.Add(self.spinX1,1*3)
         self.sizer.Add(self.textUnit,2, wx.FIXED_MINSIZE)
         self.sizer.Add(self.spinUnit,1*3)
         self.sizer.Add(self.slider, 12*3)
@@ -116,9 +117,7 @@ class CorbomiteGuiWidgetAnalogOut(CorbomiteGuiWidget):
     def updateValue(self, value):
         self.shadowValue = value
         self.updateValueText()
-        #self.widget.value.setUnit(value)
         self.widget.setValue(value)
-        self.setSlider()
     
     def setSlider(self):
         sval = float(self.slider.GetMax())*float(self.shadowValue-self.widget.value.minUnit)/float(self.widget.value.maxUnit)
@@ -129,7 +128,6 @@ class CorbomiteGuiWidgetAnalogOut(CorbomiteGuiWidget):
             delta = 1
         else:
             delta = -1
-        print "delta", delta
         spinner.SetValue(1)
         return delta
 
@@ -139,16 +137,18 @@ class CorbomiteGuiWidgetAnalogOut(CorbomiteGuiWidget):
 
     def onSpinX1(self, evt):
         d = 10**(self.preferedPrefix*3)*self.spinDelta(self.spinX1)*1
-        print d
         self.updateValue(self.shadowValue+d)
+        self.setSlider()
 
     def onSpinX2(self, evt):
         d = 10**(self.preferedPrefix*3)*self.spinDelta(self.spinX2)*10
         self.updateValue(self.shadowValue+d)
+        self.setSlider()
 
     def onSpinX3(self, evt):
         d = 10**(self.preferedPrefix*3)*self.spinDelta(self.spinX3)*100
         self.updateValue(self.shadowValue+d)
+        self.setSlider()
 
 
     def updateValueText(self):
@@ -158,6 +158,7 @@ class CorbomiteGuiWidgetAnalogOut(CorbomiteGuiWidget):
         self.textUnit.SetLabel(corbomiteWidgets.prefixLetter(self.preferedPrefix))
 
     def onSlide(self, evt):
+        print "slideEvent"
         self.updateValue(self.widget.value.maxUnit*float(self.slider.GetValue())/float(self.slider.GetMax()))
 
 
@@ -174,7 +175,7 @@ class CorbomiteGuiWidgetAnalogIn(CorbomiteGuiWidget):
 
     def update(self, event):
         self.gauge.SetValue(event.attr1.value.getRaw())
-        self.label.SetLabel(self.widget.name+' '+self.widget.value.getValueString())
+        self.label.SetLabel(self.widget.name+' '+event.attr1.value.getValueString())
         #self.label.SetLabel(self.widget.name)
         #wx.Yield()
 

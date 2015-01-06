@@ -16,14 +16,23 @@ def calculatePrefixMultiplier(prefix):
 
 def stringToValue(st):
         i = 0
+        decCount = 0
         for s in st:
             i += 1
-            if s not in ['1', '2', '3', '4', '5', '7', '8', '9', '0', '.', ',']:
+            if s not in ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '.', ',']:
                  break
+            if s in ['.', ',']:
+                decCount+=1
+                if decCount > 1:
+                    break
+            
         number = st[0:i-1]
         p = st[i-1:].strip()[0]
-        print number, p, calculatePrefixMultiplier(p)
-        return float(number)*calculatePrefixMultiplier(p)
+        print "number", number, decCount
+        try:
+            return float(number)*calculatePrefixMultiplier(p)
+        except:
+            return float(number)
 
 class CorbomiteValue:
     def __init__(self, unit, minUnit, maxUnit, minRaw, maxRaw):
