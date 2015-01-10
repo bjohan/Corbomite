@@ -3,6 +3,7 @@ import wx
 import random
 import math
 import time
+import csv
 
 import cProfile
 types = {}
@@ -186,6 +187,7 @@ class CorbomiteGuiWidgetTraceIn(CorbomiteGuiWidget):
         CorbomiteGuiWidget.__init__(self, parent, widget)
         self.rightPressed = False
         self.leftPressed = False
+        self.scrolled = False
         self.Bind(wx.EVT_LEFT_DCLICK, self.onDoubleClick)
         self.Bind(wx.EVT_LEFT_UP, self.onLeftUp)
         self.Bind(wx.EVT_MOTION, self.onMotion)
@@ -209,6 +211,24 @@ class CorbomiteGuiWidgetTraceIn(CorbomiteGuiWidget):
         self.Bind(wx.EVT_TIMER, self.onTimer, self.timer)
         self.timer.Start(1000)
         self.time = time.time()
+
+        self.popupmenu = wx.Menu()
+        self.Bind(wx.EVT_MENU, self.onSaveTrace, self.popupmenu.Append(-1, "Save trace"))
+
+    def onSaveTrace(self, event):
+        fd = wx.FileDialog(self, 'Save trace', "", "", 'Comma separated files (*.csv)|*.csv', wx.FD_SAVE)
+        fd.ShowModal()
+        path = fd.GetPath()
+        outFile = open(path, 'wb')
+        wr = csv.writer(outFile);
+        wr.writerow(self.x)
+        wr.writerow(self.y)
+
+    def OnPopupItemSelected(self, event):
+        item = self.popupmenu.FindItemById(event.GetId())
+        text = item.GetText()
+        wx.MessageBox("You selected item '%s'" % text)
+
 
     def onTimer(self, evt):
         if time.time() > self.time:
@@ -264,6 +284,10 @@ class CorbomiteGuiWidgetTraceIn(CorbomiteGuiWidget):
      
     def onRightUp(self, evt):
         self.rightPressed = False
+        if not self.scrolled:
+            pos = evt.GetPosition()
+            self.PopupMenu(self.popupmenu, pos)
+        self.scrolled = False
      
     def zoomYScale(self, factor):
         center = 0.5*(self.yMin+self.yMax)
@@ -280,6 +304,7 @@ class CorbomiteGuiWidgetTraceIn(CorbomiteGuiWidget):
         self.xMax = center+half
 
     def onMouseWheel(self, evt):
+        self.scrolled = True
         if evt.GetWheelRotation() < 0:
             if self.rightPressed:
                 self.zoomXScale(1.1)
