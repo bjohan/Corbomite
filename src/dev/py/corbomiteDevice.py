@@ -1,18 +1,26 @@
 class Widget:
-    def __init__(self, name):
+    def __init__(self, name, readCallback, writeCallback):
         self.name = name
-        
-    def read(self):
+
+    def onInfo(self):
         pass
+    
+class AnalogIn(Widget):
+    def __init__(self, iface, name, unit, minUnit, maxUnit,
+                    minRaw, maxRaw, writeCallback, readCallback):
+        Widget.__init__(self, name)
+        self.iface = iface
+        self.unit = unit
+        self.minUnit = minUnit
+        self.maxUnit = maxUnit
+        self.minRaw = minRaw
+        self.maxRaw = maxRaw
+        self.writeCallback = writeCallback
+        self.readCallback = readCallback
 
-    def write(self):
-        pass
-
-class AnalogOut(widget):
-    def __init__(self):
-        pass
-
-
+    def onInit(self):
+        self.iface.writeFrame("%s %s %f %f %d %d"%(name, unit, 
+                minUnit, maxUnit, minRaw, maxRaw))
 
 class CorbomiteDevice:
     def __init__(self, interface):
