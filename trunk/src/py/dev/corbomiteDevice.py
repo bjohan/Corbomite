@@ -22,6 +22,7 @@ class AnalogIn(Widget):
         self.iface.writeFrame("%s %s %f %f %d %d"%(name, unit, 
                 minUnit, maxUnit, minRaw, maxRaw))
 
+
 class CorbomiteDevice:
     def __init__(self, interface):
         self.widgets = []

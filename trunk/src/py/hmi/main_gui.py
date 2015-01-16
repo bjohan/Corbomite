@@ -39,7 +39,7 @@ class RootFrame(wx.Frame):
         corbomiteDevice.CorbomiteDevice(port, [dp.receiveCallback], initCallbacks = [dp.initCallback])
         self.deviceManager.addPage(dp, port.port)
 
-if __name__ == "__main__":
-    app = wx.PySimpleApp()
-    frame = RootFrame()
-    app.MainLoop()
+#if __name__ == "__main__":
+app = wx.PySimpleApp()
+frame = RootFrame()
+app.MainLoop()
