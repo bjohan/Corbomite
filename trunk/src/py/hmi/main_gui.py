@@ -3,6 +3,7 @@ import wx.aui
 import deviceManagerPanel
 import openDeviceDialog
 import corbomiteDevice
+#import com.corbomiteIO
 import devicePanel
 import serial
 import sys
@@ -24,8 +25,8 @@ class RootFrame(wx.Frame):
         self.deviceManager = deviceManagerPanel.DeviceManagerPanel(self) 
         self.Show()
         if len(sys.argv) > 1:
-		    for p in sys.argv[1:]:
-			    self.openPort(serial.Serial(p, 9600, timeout = 1))
+            for p in sys.argv[1:]:
+                self.openPort(serial.Serial(p, 9600, timeout = 1))
         #self.openPort(serial.Serial('/dev/ttyUSB0', 9600, timeout = 1))
 
 
@@ -39,7 +40,7 @@ class RootFrame(wx.Frame):
         corbomiteDevice.CorbomiteDevice(port, [dp.receiveCallback], initCallbacks = [dp.initCallback])
         self.deviceManager.addPage(dp, port.port)
 
-#if __name__ == "__main__":
-app = wx.PySimpleApp()
-frame = RootFrame()
-app.MainLoop()
+def run():
+    app = wx.PySimpleApp()
+    frame = RootFrame()
+    app.MainLoop()
