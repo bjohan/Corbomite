@@ -23,9 +23,9 @@ class OutputWidget(InputWidget):
         InputWidget.__init__(self, name, sendFunction)
         self.receiveCallbacks = receiveCallbacks
 
-    def receive(self, data):
+    def receive(self, data, interface):
         for callback in self.receiveCallbacks:
-            callback(data)
+            callback(data, interface)
 
 
 class AnalogIn(InputWidget):
@@ -36,8 +36,8 @@ class AnalogIn(InputWidget):
                                                        minRaw, maxRaw)
         self.lastValue = self.value.minRaw
 
-    def receive(self, frame):
-        return self.lastValue
+    def receive(self, frame, interface):
+        interface.write("%s %s" % (self.name, self.lastValue))
 
     def getInfo(self):
         return self.value.getInfoString()
@@ -80,13 +80,11 @@ class CorbomiteDevice(com.corbomiteIo.CorbomiteIo):
 
     def frameReceiver(self, frame):
         name = frame.split(' ')[0]
-        print "looking for name", name
         if name in self.widgetDict:
-            print self.widgetDict[name]
-            self.widgetDict[name].receive(frame)
+            self.widgetDict[name].receive(frame, self)
         else:
             print "Unable to find a widget named", name
 
-    def onInfo(self, frame):
+    def onInfo(self, frame, interface):
         for w in self.widgets[1:]:
             self.write(w.onInfo())

@@ -32,7 +32,7 @@ class TestDevice(dev.corbomiteDevice.CorbomiteDevice):
     def readAnalog(self, msg):
         return str(3.1415)
 
-    def sayHello(self, msg):
+    def sayHello(self, msg, interface):
         print "HEEEEELLLLOOOOO"
 rw = ReadWrite(sys.stdin, sys.stdout)
 td = TestDevice(rw)
