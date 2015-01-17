@@ -1,3 +1,6 @@
+import com.corbomiteValue
+
+
 class Widget:
     def __init__(self, name, readCallback, writeCallback):
         self.name = name
@@ -10,6 +13,8 @@ class AnalogIn(Widget):
     def __init__(self, iface, name, unit, minUnit, maxUnit,
                  minRaw, maxRaw, writeCallback, readCallback):
         Widget.__init__(self, name)
+        self.value = com.corbomiteValue.CorbomiteValue(unit, minUnit, maxUnit,
+                                                       minRaw, maxRaw)
         self.iface = iface
         self.unit = unit
         self.minUnit = minUnit
@@ -26,7 +31,7 @@ class AnalogIn(Widget):
                                                      self.maxRaw))
 
 
-class CorbomiteDevice:
+class CorbomiteDevice():
     def __init__(self, interface):
         self.widgets = []
         self.widgetDict = {}
