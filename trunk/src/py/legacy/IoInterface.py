@@ -1,16 +1,19 @@
 import SignalSocket.py
-__author__="bjohan"
-__date__ ="$Apr 2, 2011 12:29:33 PM$"
+__author__ = "bjohan"
+__date__ = "$Apr 2, 2011 12:29:33 PM$"
 
 
 class PinModes:
+
     def __init__(self):
         self.DigitalIn = "Digital input"
         self.DigitalOut = "Digital output"
         self.AnalogIn = "Analog input"
         self.AnalogOut = "Analog output"
 
+
 class SampleModes:
+
     def __init__(self):
         self.Polled = "Polled"
         self.Isochronous = "Isochronous"
@@ -19,7 +22,9 @@ class SampleModes:
 pinModes = PinModes()
 sampleModes = SampleModes()
 
+
 class Pin:
+
     def __init__(self, parent, name, pinModes, sampleModes, clockDomains):
         self.name = name
         self.pinModes = pinModes
@@ -27,7 +32,9 @@ class Pin:
         self.clockDomains = clockDomains
         self.parent = parent
 
+
 class IoInterface:
+
     def getPins(self):
         """this methoud shall return a list of the following structure
         [((Suppoerted pin modes of pin 1),(supported sample modes of pin 1)),

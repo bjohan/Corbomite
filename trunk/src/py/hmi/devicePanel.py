@@ -3,13 +3,9 @@ import wx.aui
 import corbomiteGuiWidgetFactory
 import wx.lib.newevent
 
+
 class DevicePanel(wx.Panel):
-    """
-    This will be the first notebook tab
-    """
-    #----------------------------------------------------------------------
     def __init__(self, parent):
-        """"""
         wx.Panel.__init__(self, parent=parent, id=wx.ID_ANY)
         self.sizer = wx.BoxSizer(wx.VERTICAL)
         self.SetSizer(self.sizer)
@@ -21,12 +17,11 @@ class DevicePanel(wx.Panel):
 
     def receiveInitEvent(self, evt):
         widget = evt.attr1
-        new = corbomiteGuiWidgetFactory.createWidget(self, widget);
-        if new is not None: 
+        new = corbomiteGuiWidgetFactory.createWidget(self, widget)
+        if new is not None:
             self.sizer.Add(new, new.yWeight, wx.EXPAND)
-	    self.sizer.Layout()
-            
-            
+            self.sizer.Layout()
+
     def initCallback(self, widget):
         evt = self.myInitEvent(attr1=widget)
         wx.PostEvent(self.GetEventHandler(), evt)

@@ -1,17 +1,19 @@
 #!/usr/bin/python
-__author__="bjohan"
+__author__ = "bjohan"
 
-import sys
 import wx
 import wx.aui
 from MessageConsolePanel import *
 from InterfacePanel import *
 from PlotPanel import *
 from SignalPanel import *
+
+
 class MainWindow(wx.Frame):
+
     def __init__(self):
-        wx.Frame.__init__(self, None, -1, 'Corbomite', size=(800,600), 
-								pos = (0,0))
+        wx.Frame.__init__(self, None, -1, 'Corbomite', size=(800, 600),
+                          pos = (0, 0))
         self.menuBar = wx.MenuBar()
         self.file = wx.Menu()
         self.operations = wx.Menu()
@@ -30,7 +32,7 @@ class MainWindow(wx.Frame):
         self.newDataSourceId = wx.NewId()
         self.operations.Append(105, 'New &signal')
 
-      	self.newPlotId = wx.NewId()
+        self.newPlotId = wx.NewId()
         self.operations.Append(self.newPlotId, 'New plot')
         self.Bind(wx.EVT_MENU, self.onNewPlot, id=self.newPlotId)
 
@@ -40,27 +42,26 @@ class MainWindow(wx.Frame):
         self.SetMenuBar(self.menuBar)
 
         self.messageConsole = MessageConsolePanel(self)
-	
+
         self.mgr = wx.aui.AuiManager(self)
-	
+
         self.plotPanel = PlotPanel(self)
         self.mgr.AddPane(self.plotPanel, wx.CENTER, 'Plots')
 
-        self.signalPanel = SignalPanel(self)	
+        self.signalPanel = SignalPanel(self)
         self.mgr.AddPane(self.signalPanel, wx.TOP, 'Signal manager')
-        self.mgr.AddPane(self.ioInterfacesTabPanel, wx.RIGHT,'Input devices')
-        self.mgr.AddPane(self.messageConsole, wx.BOTTOM,'Message console')
+        self.mgr.AddPane(self.ioInterfacesTabPanel, wx.RIGHT, 'Input devices')
+        self.mgr.AddPane(self.messageConsole, wx.BOTTOM, 'Message console')
 
         self.mgr.Update()
         self.Show(True)
         self.messageConsole.write("Welcome!")
-        
+
     def onNewIoInterface(self, event):
         self.ioInterfacesTabPanel.addInterface()
 
     def onNewPlot(self, event):
-		self.plotPanel.addPlot()
+        self.plotPanel.addPlot()
 app = wx.App()
 MainWindow()
 app.MainLoop()
-

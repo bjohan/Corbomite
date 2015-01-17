@@ -1,16 +1,15 @@
 import corbomiteWidgets
 import wx
-import random
 import math
 import time
 import csv
 
-import cProfile
 types = {}
+
 
 class CorbomiteGuiWidget(wx.Panel):
     def __init__(self, parent, widget):
-        wx.Panel.__init__(self, parent = parent)
+        wx.Panel.__init__(self, parent=parent)
         self.myInitEvent, self.EVT_MY_INIT_EVENT = wx.lib.newevent.NewEvent()
         self.Bind(self.EVT_MY_INIT_EVENT, self.update)
         self.widget = widget
@@ -24,13 +23,14 @@ class CorbomiteGuiWidget(wx.Panel):
         wx.PostEvent(self.GetEventHandler(), evt)
 
     def update(self, event):
-        print "The gui widget for", self.widget.name, "has no handler so event is skipped"
-        
+        print "The gui widget for", self.widget.name,\
+              "has no handler so event is skipped"
+
 
 class CorbomiteGuiWidgetDigitalOut(CorbomiteGuiWidget):
     def __init__(self, parent, widget):
         CorbomiteGuiWidget.__init__(self, parent, widget)
-        self.box = wx.CheckBox(parent = self, label = widget.name)
+        self.box = wx.CheckBox(parent=self, label=widget.name)
         self.box.Bind(wx.EVT_CHECKBOX, self.OnClick)
         self.sizer.Add(self.box, 1, wx.GROW)
 
@@ -39,13 +39,14 @@ class CorbomiteGuiWidgetDigitalOut(CorbomiteGuiWidget):
 
 types[corbomiteWidgets.DigitalOutWidget] = CorbomiteGuiWidgetDigitalOut
 
+
 class CorbomiteGuiWidgetDigitalIn(CorbomiteGuiWidget):
     def __init__(self, parent, widget):
         CorbomiteGuiWidget.__init__(self, parent, widget)
-        self.box = wx.CheckBox(parent = self, label = widget.name)
+        self.box = wx.CheckBox(parent=self, label=widget.name)
         self.box.Enable(False)
         self.sizer.Add(self.box, 1)
-        #widget.addCallback(self.update)
+        # widget.addCallback(self.update)
 
     def update(self, evt):
         if(evt.attr1.value > 0):
@@ -54,10 +55,11 @@ class CorbomiteGuiWidgetDigitalIn(CorbomiteGuiWidget):
             self.box.SetValue(False)
 types[corbomiteWidgets.DigitalInWidget] = CorbomiteGuiWidgetDigitalIn
 
+
 class CorbomiteGuiWidgetEventOut(CorbomiteGuiWidget):
     def __init__(self, parent, widget):
         CorbomiteGuiWidget.__init__(self, parent, widget)
-        self.button = wx.Button(parent = self,  label = self.widget.name)
+        self.button = wx.Button(parent=self,  label=self.widget.name)
         self.button.Bind(wx.EVT_BUTTON, self.onButton)
         self.sizer.Add(self.button, 1)
 
@@ -69,9 +71,10 @@ types[corbomiteWidgets.EventOutWidget] = CorbomiteGuiWidgetEventOut
 class CorbomiteGuiWidgetAnalogOut(CorbomiteGuiWidget):
     def __init__(self, parent, widget):
         CorbomiteGuiWidget.__init__(self, parent, widget)
-        self.preferedPrefix, foo = corbomiteWidgets.calculatePrefix(self.widget.value.getUnit())
-        self.label = wx.StaticText(self, label = self.widget.name)
-        self.valueText = wx.TextCtrl(self, style = wx.TE_PROCESS_ENTER)
+        self.preferedPrefix, foo = \
+            corbomiteWidgets.calculatePrefix(self.widget.value.getUnit())
+        self.label = wx.StaticText(self, label=self.widget.name)
+        self.valueText = wx.TextCtrl(self, style=wx.TE_PROCESS_ENTER)
         self.Bind(wx.EVT_TEXT_ENTER, self.onEnter, self.valueText)
         font = wx.Font(4, wx.DECORATIVE, wx.ITALIC, wx.NORMAL)
         self.spinX3 = wx.SpinButton(self, style=wx.SP_VERTICAL)
@@ -88,7 +91,9 @@ class CorbomiteGuiWidgetAnalogOut(CorbomiteGuiWidget):
         self.textX1.SetFont(font)
         self.spinUnit = wx.SpinButton(self, style=wx.SP_VERTICAL)
         self.spinUnit.SetValue(1)
-        self.textUnit = wx.StaticText(self, -1, corbomiteWidgets.prefixLetter(self.preferedPrefix))
+        self.textUnit = wx.StaticText(
+            self, -1,
+            corbomiteWidgets.prefixLetter(self.preferedPrefix))
         self.Bind(wx.EVT_SPIN, self.onPrefixSpin, self.spinUnit)
         self.Bind(wx.EVT_SPIN, self.onSpinX3, self.spinX3)
         self.Bind(wx.EVT_SPIN, self.onSpinX2, self.spinX2)
@@ -96,19 +101,19 @@ class CorbomiteGuiWidgetAnalogOut(CorbomiteGuiWidget):
         self.slider = wx.Slider(self, wx.ID_ANY, 0, 0, 1000000)
         self.slider.Bind(wx.EVT_SCROLL, self.onSlide)
         self.updateValue(self.widget.value.minUnit)
-        
-        self.sizer.Add(self.label,4*3)
-        self.sizer.Add(self.valueText,8*3)
-        self.sizer.Add(self.textX3,1,wx.FIXED_MINSIZE, wx.ALIGN_CENTER_VERTICAL)
-        self.sizer.Add(self.spinX3,1*3)
-        self.sizer.Add(self.textX2,1,wx.FIXED_MINSIZE)
-        self.sizer.Add(self.spinX2,1*3)
-        self.sizer.Add(self.textX1,1,wx.FIXED_MINSIZE)
-        self.sizer.Add(self.spinX1,1*3)
-        self.sizer.Add(self.textUnit,2, wx.FIXED_MINSIZE)
-        self.sizer.Add(self.spinUnit,1*3)
-        self.sizer.Add(self.slider, 12*3)
 
+        self.sizer.Add(self.label, 4*3)
+        self.sizer.Add(self.valueText, 8*3)
+        self.sizer.Add(self.textX3, 1,
+                       wx.FIXED_MINSIZE, wx.ALIGN_CENTER_VERTICAL)
+        self.sizer.Add(self.spinX3, 1*3)
+        self.sizer.Add(self.textX2, 1, wx.FIXED_MINSIZE)
+        self.sizer.Add(self.spinX2, 1*3)
+        self.sizer.Add(self.textX1, 1, wx.FIXED_MINSIZE)
+        self.sizer.Add(self.spinX1, 1*3)
+        self.sizer.Add(self.textUnit, 2, wx.FIXED_MINSIZE)
+        self.sizer.Add(self.spinUnit, 1*3)
+        self.sizer.Add(self.slider, 12*3)
 
     def onEnter(self, evt):
         text = self.valueText.GetValue()
@@ -119,9 +124,11 @@ class CorbomiteGuiWidgetAnalogOut(CorbomiteGuiWidget):
         self.shadowValue = value
         self.updateValueText()
         self.widget.setValue(value)
-    
+
     def setSlider(self):
-        sval = float(self.slider.GetMax())*float(self.shadowValue-self.widget.value.minUnit)/float(self.widget.value.maxUnit)
+        sval = float(self.slider.GetMax()) *\
+            float(self.shadowValue-self.widget.value.minUnit) /\
+            float(self.widget.value.maxUnit)
         self.slider.SetValue(sval)
 
     def spinDelta(self, spinner):
@@ -151,36 +158,41 @@ class CorbomiteGuiWidgetAnalogOut(CorbomiteGuiWidget):
         self.updateValue(self.shadowValue+d)
         self.setSlider()
 
-
     def updateValueText(self):
         dispVal = self.shadowValue/(10**(self.preferedPrefix*3))
-        dispString = str(dispVal)+' '+corbomiteWidgets.prefixLetter(self.preferedPrefix)+self.widget.value.unit
+        dispString = str(dispVal) + ' ' +\
+            corbomiteWidgets.prefixLetter(self.preferedPrefix) +\
+            self.widget.value.unit
         self.valueText.SetValue(dispString)
-        self.textUnit.SetLabel(corbomiteWidgets.prefixLetter(self.preferedPrefix))
+        self.textUnit.SetLabel(
+            corbomiteWidgets.prefixLetter(self.preferedPrefix))
 
     def onSlide(self, evt):
         print "slideEvent"
-        self.updateValue(self.widget.value.maxUnit*float(self.slider.GetValue())/float(self.slider.GetMax()))
-
-
+        self.updateValue(self.widget.value.maxUnit *
+                         float(self.slider.GetValue()) /
+                         float(self.slider.GetMax()))
 types[corbomiteWidgets.AnalogOutWidget] = CorbomiteGuiWidgetAnalogOut
+
 
 class CorbomiteGuiWidgetAnalogIn(CorbomiteGuiWidget):
     def __init__(self, parent, widget):
         CorbomiteGuiWidget.__init__(self, parent, widget)
-        self.gauge = wx.Gauge(self, wx.ID_ANY, widget.value.maxRaw - widget.value.minRaw)
-        #widget.addCallback(self.update)
-        self.label = wx.StaticText(self, label = self.widget.name)
-        self.sizer.Add(self.label,1)
+        self.gauge = wx.Gauge(self, wx.ID_ANY, widget.value.maxRaw -
+                              widget.value.minRaw)
+        # widget.addCallback(self.update)
+        self.label = wx.StaticText(self, label=self.widget.name)
+        self.sizer.Add(self.label, 1)
         self.sizer.Add(self.gauge, 3)
 
     def update(self, event):
         self.gauge.SetValue(event.attr1.value.getRaw())
-        self.label.SetLabel(self.widget.name+' '+event.attr1.value.getValueString())
-        #self.label.SetLabel(self.widget.name)
-        #wx.Yield()
-
+        self.label.SetLabel(self.widget.name + ' ' +
+                            event.attr1.value.getValueString())
+        # self.label.SetLabel(self.widget.name)
+        # wx.Yield()
 types[corbomiteWidgets.AnalogInWidget] = CorbomiteGuiWidgetAnalogIn
+
 
 class CorbomiteGuiWidgetTraceIn(CorbomiteGuiWidget):
     def __init__(self, parent, widget):
@@ -197,30 +209,32 @@ class CorbomiteGuiWidgetTraceIn(CorbomiteGuiWidget):
         self.Bind(wx.EVT_PAINT, self.onPaint)
         self.Bind(wx.EVT_SIZE, self.sizeEvent)
         parent.Bind(wx.EVT_MOUSEWHEEL, self.onMouseWheel)
-        self.yWeight=10
+        self.yWeight = 10
         self.x = []
         self.y = []
         self.lastCoords = None
         self.pixelsPerGraticuleLine = 75
         for i in range(1000):
-            self.x.append(float(i));
+            self.x.append(float(i))
             self.y.append(math.sin(float(i)/100.0))
         self.autoScale()
-        #self.widget.addCallback(self.update)
+        # self.widget.addCallback(self.update)
         self.timer = wx.Timer(self)
         self.Bind(wx.EVT_TIMER, self.onTimer, self.timer)
         self.timer.Start(1000)
         self.time = time.time()
 
         self.popupmenu = wx.Menu()
-        self.Bind(wx.EVT_MENU, self.onSaveTrace, self.popupmenu.Append(-1, "Save trace"))
+        self.Bind(wx.EVT_MENU, self.onSaveTrace, self.popupmenu.Append(-1,
+                  "Save trace"))
 
     def onSaveTrace(self, event):
-        fd = wx.FileDialog(self, 'Save trace', "", "", 'Comma separated files (*.csv)|*.csv', wx.FD_SAVE)
+        fd = wx.FileDialog(self, 'Save trace', "", "",
+                           'Comma separated files (*.csv)|*.csv', wx.FD_SAVE)
         fd.ShowModal()
         path = fd.GetPath()
         outFile = open(path, 'wb')
-        wr = csv.writer(outFile);
+        wr = csv.writer(outFile)
         wr.writerow(self.x)
         wr.writerow(self.y)
 
@@ -228,7 +242,6 @@ class CorbomiteGuiWidgetTraceIn(CorbomiteGuiWidget):
         item = self.popupmenu.FindItemById(event.GetId())
         text = item.GetText()
         wx.MessageBox("You selected item '%s'" % text)
-
 
     def onTimer(self, evt):
         if time.time() > self.time:
@@ -264,31 +277,31 @@ class CorbomiteGuiWidgetTraceIn(CorbomiteGuiWidget):
             uppy = (self.yMax-self.yMin)/float(self.GetSize()[1])
             dx = dxp*uppx
             dy = dyp*uppy
-            self.xMax+=dx
-            self.yMax+=dy
-            self.xMin+=dx
-            self.yMin+=dy
+            self.xMax += dx
+            self.yMax += dy
+            self.xMin += dx
+            self.yMin += dy
             self.rePaint()
             self.lastCoords = (evt.GetX(), evt.GetY())
 
-    def onLeftUp(self,evt):
+    def onLeftUp(self, evt):
         self.leftPressed = False
         self.lastCoords = None
 
     def onDoubleClick(self, evt):
         self.autoScale()
-        self.rePaint()          
+        self.rePaint()
 
     def onRightDown(self, evt):
         self.rightPressed = True
-     
+
     def onRightUp(self, evt):
         self.rightPressed = False
         if not self.scrolled:
             pos = evt.GetPosition()
             self.PopupMenu(self.popupmenu, pos)
         self.scrolled = False
-     
+
     def zoomYScale(self, factor):
         center = 0.5*(self.yMin+self.yMax)
         half = self.yMax-center
@@ -315,8 +328,7 @@ class CorbomiteGuiWidgetTraceIn(CorbomiteGuiWidget):
                 self.zoomXScale(1/1.1)
             else:
                 self.zoomYScale(1/1.1)
-        self.rePaint()            
-        
+        self.rePaint()
 
     def sizeEvent(self, evt):
         self.Refresh()
@@ -335,7 +347,7 @@ class CorbomiteGuiWidgetTraceIn(CorbomiteGuiWidget):
                 f = (10**tens)*m
                 if f > value:
                     return f
-            tens+=1
+            tens += 1
 
     def getGraticuleResolution(self, axisRange, axisSize):
         maxGraticuleLines = axisSize/self.pixelsPerGraticuleLine
@@ -343,52 +355,50 @@ class CorbomiteGuiWidgetTraceIn(CorbomiteGuiWidget):
         return self.findClosest125(firstGuess)
 
     def xAxisToPixels(self, x):
-        (winx, winy) = self.GetSize();
+        (winx, winy) = self.GetSize()
         pixelsPerUnit = winx/(self.xMax-self.xMin)
-        xPixels = (x-self.xMin)*pixelsPerUnit
-        
+        xPixels = (x - self.xMin)*pixelsPerUnit
         return max(min(xPixels, winx+1), -1)
-        
+
     def yAxisToPixels(self, y):
-        (winx, winy) = self.GetSize();
-        pixelsPerUnit = winy/(self.yMax-self.yMin)
+        (winx, winy) = self.GetSize()
+        pixelsPerUnit = winy/(self.yMax - self.yMin)
         yPixels = winy-(y-self.yMin)*pixelsPerUnit
         return max(min(yPixels, winy+1), -1)
 
     def computeScale(self, axisMax, axisMin, axisLengthInPixels):
         axisMax = float(axisMax)
         axisMin = float(axisMin)
-        axisRange = axisMax - axisMin;
+        axisRange = axisMax - axisMin
         if axisRange < 1e-18:
                 axisRange = 1
-        graticuleResolution = self.getGraticuleResolution(axisRange, axisLengthInPixels)
-        startGraticule = axisMin - axisMin%graticuleResolution
+        graticuleResolution = self.getGraticuleResolution(axisRange,
+                                                          axisLengthInPixels)
+        startGraticule = axisMin - axisMin % graticuleResolution
         currentGraticule = startGraticule
-        gls = [] #Graticule lines as pixel coordinates
+        gls = []  # Graticule lines as pixel coordinates
         while True:
             gls.append(currentGraticule)
             currentGraticule += graticuleResolution
-            #print graticuleResolution, axisRange, axisMax, axisMin, axisLengthInPixels
             if currentGraticule > axisMax:
-                break 
+                break
         return gls
 
     def drawScale(self, dc):
         (winx, winy) = self.GetSize()
         glsY = self.computeScale(self.yMax, self.yMin, winy)
-        glsX = self.computeScale(self.xMax, self.xMin, winx) 
+        glsX = self.computeScale(self.xMax, self.xMin, winx)
         for ya in glsY:
             y = self.yAxisToPixels(ya)
             dc.DrawLine(0, y, winx, y)
-            dc.DrawText(self.widget.value[1].getPrecisionString(ya,2), 0, y)
+            dc.DrawText(self.widget.value[1].getPrecisionString(ya, 2), 0, y)
         for xa in glsX[1:]:
             x = self.xAxisToPixels(xa)
             dc.DrawLine(x, 0, x, winy)
-            dc.DrawText(self.widget.value[0].getPrecisionString(xa,2), x, 0)
-            #dc.DrawText(str(xa), x, 0)
+            dc.DrawText(self.widget.value[0].getPrecisionString(xa, 2), x, 0)
 
     def drawPlot(self, dc):
-        (winx, winy) = self.GetSize();
+        (winx, winy) = self.GetSize()
         xpixelsPerUnit = winx/(self.xMax-self.xMin)
         ypixelsPerUnit = winy/(self.yMax-self.yMin)
         points = zip(self.x, self.y)
@@ -399,25 +409,17 @@ class CorbomiteGuiWidgetTraceIn(CorbomiteGuiWidget):
             y1 = min(winy-(p1[1]-self.yMin)*ypixelsPerUnit, winy+1)
             x2 = min((p2[0]-self.xMin)*xpixelsPerUnit, winx+1)
             y2 = min(winy-(p2[1]-self.yMin)*ypixelsPerUnit, winy+1)
-            
-            dc.DrawLine(x1,y1,x2,y2)
-            #dc.DrawLine((p1[0]-self.xMin)*xpixelsPerUnit,winy-(p1[1]-self.yMin)*ypixelsPerUnit,
-            #            (p2[0]-self.xMin)*xpixelsPerUnit,winy-(p2[1]-self.yMin)*ypixelsPerUnit)
-            
+            dc.DrawLine(x1, y1, x2, y2)
+
     def render(self, dc):
-        #print "Rendering"
-        c = wx.Colour(255,255,255)
+        c = wx.Colour(255, 255, 255)
         brush = wx.Brush(c, wx.SOLID)
         dc.SetBackground(brush)
         dc.Clear()
-        #p = cProfile.Profile()
-
-        #p.enable()
         self.drawScale(dc)
         self.drawPlot(dc)
-        #p.disable()
-        #p.print_stats()
 types[corbomiteWidgets.TraceInWidget] = CorbomiteGuiWidgetTraceIn
+
 
 def createWidget(parent, widget):
     try:
@@ -425,4 +427,3 @@ def createWidget(parent, widget):
         return constr(parent, widget)
     except KeyError:
         print "WARNING", widget.__class__, "is not supported"
-

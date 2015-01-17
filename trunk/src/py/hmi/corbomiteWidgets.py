@@ -1,31 +1,35 @@
 import math
 
+
 def calculatePrefix(value):
-        if abs(value) <1e-21:
+        if abs(value) < 1e-21:
             return (0, '')
         decades = math.log10(abs(value))
-        prefNum = int(decades)/3;
-        prefix = 'afnpum KMGTPY'[prefNum+6]
+        prefNum = int(decades)/3
+        prefix = 'afnpum KMGTPY'[prefNum + 6]
         return (prefNum, prefix)
 
+
 def prefixLetter(prefNum):
-        return 'afnpum KMGTPY'[prefNum+6]
+        return 'afnpum KMGTPY'[prefNum + 6]
+
 
 def calculatePrefixMultiplier(prefix):
         return 10**(('afnpum KMGTPY'.index(prefix)-6)*3)
+
 
 def stringToValue(st):
         i = 0
         decCount = 0
         for s in st:
             i += 1
-            if s not in ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '.', ',']:
-                 break
+            if s not in ['1', '2', '3', '4', '5', '6',
+                         '7', '8', '9', '0', '.', ',']:
+                break
             if s in ['.', ',']:
-                decCount+=1
+                decCount += 1
                 if decCount > 1:
                     break
-            
         number = st[0:i-1]
         p = st[i-1:].strip()[0]
         print "number", number, decCount
@@ -34,6 +38,7 @@ def stringToValue(st):
         except:
             return float(number)
 
+
 class CorbomiteValue:
     def __init__(self, unit, minUnit, maxUnit, minRaw, maxRaw):
         self.unit = unit
@@ -41,21 +46,22 @@ class CorbomiteValue:
         self.maxUnit = float(maxUnit)
         self.minRaw = float(minRaw)
         self.maxRaw = float(maxRaw)
-        self.unitsPerRaw = (self.maxUnit - self.minUnit)/(self.maxRaw - self.minRaw)
+        self.unitsPerRaw = (self.maxUnit - self.minUnit) /\
+                           (self.maxRaw - self.minRaw)
         self.rawValue = self.minRaw
 
     def getPrecisionString(self, value, precision):
-        if abs(value) <1e-21:
-            return "0 "+self.unit
+        if abs(value) < 1e-21:
+            return "0 " + self.unit
         decades = math.log10(abs(value))
-        prefNum = int(decades)/3;
+        prefNum = int(decades)/3
         prefix = 'afnpum KMGTPY'[prefNum+6]
         displayValue = value*10**(-3*prefNum)
         fmtString = '%1.'+str(precision)+'f '+str(prefix)+self.unit
-        return fmtString%(displayValue)
+        return fmtString % (displayValue)
 
     def getValueString(self):
-        return self.getPrecisionString(self.getUnit(),3)
+        return self.getPrecisionString(self.getUnit(), 3)
 
     def setRaw(self, raw):
         self.rawValue = raw
@@ -69,7 +75,7 @@ class CorbomiteValue:
     def getUnit(self):
         return self.toUnit(self.rawValue)
 
-    def toUnit(self, raw): 
+    def toUnit(self, raw):
         return self.minUnit + (raw-self.minRaw)*self.unitsPerRaw
 
     def toRaw(self, unit):
@@ -78,10 +84,11 @@ class CorbomiteValue:
     def getUnitString(self):
         return str(self.getUnit())+' '+self.unit
 
+
 class CorbomiteWidget:
     types = {}
 
-    @staticmethod    
+    @staticmethod
     def factory(frame, parentDevice):
         t = frame.split()[0]
         if t in CorbomiteWidget.types:
@@ -89,7 +96,7 @@ class CorbomiteWidget:
         else:
             print "Warning", t, "is not supported by this implementation"
 
-    @staticmethod    
+    @staticmethod
     def registerCorbomiteWidgetType(t, constructor):
         CorbomiteWidget.types[t] = constructor
 
@@ -109,7 +116,8 @@ class CorbomiteWidget:
         self.writeValue(self.value.getRaw())
 
     def readEvent(self, line):
-        print self.__class__.__name__, "does not have a an event handler so:", line, "is unprocessed"
+        print self.__class__.__name__, "does not have a an event handler so:",\
+            line, "is unprocessed"
 
     def addCallback(self, cbk):
         self.callBacks.append(cbk)
@@ -122,8 +130,9 @@ class CorbomiteWidget:
 class AnalogInWidget(CorbomiteWidget):
     def __init__(self, frame, parentDevice):
         toks = frame.split()
-        CorbomiteWidget.__init__(self, frame, parentDevice, 
-                        CorbomiteValue(toks[2], toks[3], toks[4], toks[5], toks[6]))
+        CorbomiteWidget.__init__(self, frame, parentDevice,
+                                 CorbomiteValue(toks[2], toks[3], toks[4],
+                                                toks[5], toks[6]))
 
     def readEvent(self, line):
         self.value.setRaw(int(line.split()[1]))
@@ -135,18 +144,20 @@ class AnalogOutWidget(CorbomiteWidget):
     def __init__(self, frame, parentDevice):
         toks = frame.split()
         CorbomiteWidget.__init__(self, frame, parentDevice,
-                        CorbomiteValue(toks[2], toks[3], toks[4], toks[5], toks[6]))
+                                 CorbomiteValue(toks[2], toks[3], toks[4],
+                                                toks[5], toks[6]))
 
     def writeValue(self, value):
         self.parentDevice.write(self.name+' '+str(value))
-
 CorbomiteWidget.registerCorbomiteWidgetType('aout', AnalogOutWidget)
+
 
 class DigitalInWidget(CorbomiteWidget):
     def __init__(self, frame, parentDevice):
-        CorbomiteWidget.__init__(self, frame, parentDevice, CorbomiteValue('bool',0,1,0,1))
+        CorbomiteWidget.__init__(self, frame, parentDevice,
+                                 CorbomiteValue('bool', 0, 1, 0, 1))
 
-    def readEvent(self,line):
+    def readEvent(self, line):
         self.value = int(line.split()[1])
 
 CorbomiteWidget.registerCorbomiteWidgetType('din', DigitalInWidget)
@@ -154,11 +165,12 @@ CorbomiteWidget.registerCorbomiteWidgetType('din', DigitalInWidget)
 
 class DigitalOutWidget(CorbomiteWidget):
     def __init__(self, frame, parentDevice):
-        CorbomiteWidget.__init__(self, frame, parentDevice, CorbomiteValue('bool',0,1,0,1))
+        CorbomiteWidget.__init__(self, frame, parentDevice,
+                                 CorbomiteValue('bool', 0, 1, 0, 1))
 
     def writeValue(self, value):
         valueToSend = ' 0'
-        if(value == True or value > 0):
+        if value is True or value > 0:
             valueToSend = ' 1'
         self.parentDevice.write(self.name+valueToSend)
 
@@ -168,9 +180,11 @@ CorbomiteWidget.registerCorbomiteWidgetType('dout', DigitalOutWidget)
 class TraceInWidget(CorbomiteWidget):
     def __init__(self, frame, parentDevice):
         toks = frame.split()
-        CorbomiteWidget.__init__(self, frame, parentDevice, 
-                        [CorbomiteValue(toks[2], toks[3], toks[4], toks[5], toks[6]),
-                        CorbomiteValue(toks[7], toks[8], toks[9], toks[10], toks[11])])
+        CorbomiteWidget.__init__(self, frame, parentDevice,
+                                 [CorbomiteValue(toks[2], toks[3], toks[4],
+                                                 toks[5], toks[6]),
+                                  CorbomiteValue(toks[7], toks[8], toks[9],
+                                                 toks[10], toks[11])])
         self.trace = []
         self.x = None
         self.y = None
@@ -183,7 +197,7 @@ class TraceInWidget(CorbomiteWidget):
             if len(self.trace) > 0:
                 if self.trace[-1][0] > self.x:
                     self.trace = []
-            self.trace.append((self.x,self.y))
+            self.trace.append((self.x, self.y))
         except:
             print "Unable to parse the line", line
 
@@ -199,14 +213,15 @@ CorbomiteWidget.registerCorbomiteWidgetType('tout', TraceOutWidget)
 
 class EventInWidget(CorbomiteWidget):
     def __init__(self, frame, parentDevice):
-        CorbomiteWidget.__init__(self, frame, parentDevice, CorbomiteValue('event',0,1,0,1))
-
+        CorbomiteWidget.__init__(self, frame, parentDevice,
+                                 CorbomiteValue('event', 0, 1, 0, 1))
 CorbomiteWidget.registerCorbomiteWidgetType('ein', EventInWidget)
 
 
 class EventOutWidget(CorbomiteWidget):
     def __init__(self, frame, parentDevice):
-        CorbomiteWidget.__init__(self, frame, parentDevice,CorbomiteValue('event',0,1,0,1))
+        CorbomiteWidget.__init__(self, frame, parentDevice,
+                                 CorbomiteValue('event', 0, 1, 0, 1))
 
     def setValue(self, value):
         self.writeValue(None)
@@ -215,10 +230,11 @@ class EventOutWidget(CorbomiteWidget):
         self.parentDevice.write(self.name)
 
 CorbomiteWidget.registerCorbomiteWidgetType('eout', EventOutWidget)
- 
+
+
 class InfoWidget(CorbomiteWidget):
     def __init__(self, frame, parentDevice):
-        CorbomiteWidget.__init__(self, frame, parentDevice, CorbomiteValue('str',0,1,0,1))
+        CorbomiteWidget.__init__(self, frame, parentDevice,
+                                 CorbomiteValue('str', 0, 1, 0, 1))
 
 CorbomiteWidget.registerCorbomiteWidgetType('info', InfoWidget)
- 

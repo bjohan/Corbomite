@@ -1,15 +1,15 @@
-import serial
-import threading
-import thread
-import time
 import corbomiteWidgets
 import com.corbomiteIo
+
+
 class CorbomiteDevice(com.corbomiteIo.CorbomiteIo):
-    def __init__(self, io, frameCallbacks = [], initCallbacks = [], eventCallbacks = []):
-	com.corbomiteIo.CorbomiteIo.__init__(self, io, frameCallbacks, initCallbacks, eventCallbacks)
-	self.widgets = {}
+    def __init__(self, io, frameCallbacks=[], initCallbacks=[],
+                 eventCallbacks=[]):
+        com.corbomiteIo.CorbomiteIo.__init__(self, io, frameCallbacks,
+                                             initCallbacks, eventCallbacks)
+        self.widgets = {}
         print "Sending info"
-        self.writer.write("info");
+        self.writer.write("info")
         print "Waiting for data..."
         while self.busy:
             pass
@@ -25,7 +25,7 @@ class CorbomiteDevice(com.corbomiteIo.CorbomiteIo):
         self.writer.stop()
 
     def frameReceiver(self, frame):
-        #print "Got %d bytes in frame:"%(len(frame)), frame
+        # print "Got %d bytes in frame:"%(len(frame)), frame
         if frame == 'busy':
             self.busy = True
         elif frame == 'idle':
@@ -34,8 +34,8 @@ class CorbomiteDevice(com.corbomiteIo.CorbomiteIo):
             self.busy = False
         elif self.init:
             w = corbomiteWidgets.CorbomiteWidget.factory(frame, self)
-	    for i in self.initCallbacks:
-		i(w)
+            for i in self.initCallbacks:
+                i(w)
         else:
             name = frame.split()[0]
             if name in self.widgets:
@@ -44,5 +44,5 @@ class CorbomiteDevice(com.corbomiteIo.CorbomiteIo):
                 print "WARNING: name in frame is not registered", frame
 
     def write(self, data):
-        print "Writing" , data, "to device"
+        print "Writing", data, "to device"
         self.writer.write(data)

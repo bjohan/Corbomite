@@ -1,6 +1,7 @@
 import wx
 import wx.aui
-import devicePanel
+
+
 class DeviceManagerPanel(wx.Panel):
     def __init__(self, parent):
         wx.Panel.__init__(self, parent=parent, id=wx.ID_ANY)
@@ -12,5 +13,3 @@ class DeviceManagerPanel(wx.Panel):
 
     def addPage(self, dev, name):
         self.nb.AddPage(dev, name)
-        
-

@@ -4,10 +4,11 @@ class Widget:
 
     def onInfo(self):
         pass
-    
+
+
 class AnalogIn(Widget):
     def __init__(self, iface, name, unit, minUnit, maxUnit,
-                    minRaw, maxRaw, writeCallback, readCallback):
+                 minRaw, maxRaw, writeCallback, readCallback):
         Widget.__init__(self, name)
         self.iface = iface
         self.unit = unit
@@ -19,8 +20,10 @@ class AnalogIn(Widget):
         self.readCallback = readCallback
 
     def onInit(self):
-        self.iface.writeFrame("%s %s %f %f %d %d"%(name, unit, 
-                minUnit, maxUnit, minRaw, maxRaw))
+        self.iface.writeFrame("%s %s %f %f %d %d" % (self.name, self.unit,
+                                                     self. minUnit,
+                                                     self.maxUnit, self.minRaw,
+                                                     self.maxRaw))
 
 
 class CorbomiteDevice:
@@ -33,10 +36,9 @@ class CorbomiteDevice:
         self.widgets.append(widget)
         self.widgetDict[widget.name] = widget
 
-    def parseMessage(self, message)
+    def parseMessage(self, message):
         pass
 
     def onInfo(self):
         for w in self.widgets:
             self.interface.write(w.onInfo())
-            
