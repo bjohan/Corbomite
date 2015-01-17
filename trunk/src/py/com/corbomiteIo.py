@@ -140,21 +140,27 @@ class CorbomiteReadThread(threading.Thread):
         self.callbacks = callbacks
         self.fd = FrameDecoder()
         self.exit = False
+        print "About to start read thread"
         self.start()
+        print "Done"
 
     def addCallback(self, cbk):
         self.callbacks.append(cbk)
 
     def run(self):
+        print "Read thread running!"
         while True:
             self.m.acquire()
             if self.exit:
                 break
             d = self.i.read()
             if len(d) > 0:
+                print "Got", d
                 self.fd.addData(d)
                 for frame in self.fd.getAllFrames():
+                    print "Got frame", frame
                     for callback in self.callbacks:
+                        print "Calling", callback
                         callback(frame)
             self.m.release()
             self.s.release()
@@ -197,8 +203,7 @@ class CorbomiteIo:
         self.writer.stop()
 
     def frameReceiver(self, frame):
-        pass
+        print "Unimplemented frame receiver"
 
     def write(self, data):
-        print "Writing", data, "to device"
         self.writer.write(data)

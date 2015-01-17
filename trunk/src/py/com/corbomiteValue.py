@@ -41,11 +41,14 @@ def stringToValue(st):
 
 class CorbomiteValue:
     def __init__(self, unit, minUnit, maxUnit, minRaw, maxRaw):
+        self.setParameters(unit, minUnit, maxUnit, minRaw, maxRaw)
+
+    def setParameters(self, unit, minUnit, maxUnit, minRaw, maxRaw):
         self.unit = unit
         self.minUnit = float(minUnit)
         self.maxUnit = float(maxUnit)
-        self.minRaw = float(minRaw)
-        self.maxRaw = float(maxRaw)
+        self.minRaw = int(minRaw)
+        self.maxRaw = int(maxRaw)
         self.unitsPerRaw = (self.maxUnit - self.minUnit) /\
                            (self.maxRaw - self.minRaw)
         self.rawValue = self.minRaw
@@ -83,3 +86,11 @@ class CorbomiteValue:
 
     def getUnitString(self):
         return str(self.getUnit())+' '+self.unit
+
+    def getInfoString(self):
+        return "%s %f %f %d %d" % (self.unit, self.minUnit, self.maxUnit,
+                                   self.minRaw, self.maxRaw)
+
+    def parseString(self, string):
+        words = string.split(' ')
+        self.setParameters(words[0], words[1], words[2], words[3], words[4])

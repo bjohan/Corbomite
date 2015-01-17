@@ -1,41 +1,75 @@
+import com.corbomiteIo
 import com.corbomiteValue
 
 
-class Widget:
-    def __init__(self, name, readCallback, writeCallback):
+class InputWidget():
+    def __init__(self, name, sendFunction):
         self.name = name
+        self.sendFunction = sendFunction
 
     def onInfo(self):
+        info = self.getInfo()
+        if info:
+            return "%s %s" % (self.name, self.getInfo())
+        else:
+            return self.name
+
+    def send(self):
+        self.sendFunction()
+
+
+class OutputWidget(InputWidget):
+    def __init__(self, name, sendFunction, receiveCallbacks):
+        InputWidget.__init__(self, name, sendFunction)
+        self.receiveCallbacks = receiveCallbacks
+
+    def receive(self, data):
+        for callback in self.receiveCallbacks:
+            callback(data)
+
+
+class AnalogIn(InputWidget):
+    def __init__(self, name, unit, minUnit, maxUnit,
+                 minRaw, maxRaw, sendFunction):
+        InputWidget.__init__(self, name, sendFunction)
+        self.value = com.corbomiteValue.CorbomiteValue(unit, minUnit, maxUnit,
+                                                       minRaw, maxRaw)
+        self.lastValue = self.value.minRaw
+
+    def receive(self, frame):
+        return self.lastValue
+
+    def getInfo(self):
+        return self.value.getInfoString()
+
+
+class EventOut(OutputWidget):
+    def __init__(self, name, receiveFunction):
+        OutputWidget.__init__(self, name, None, receiveFunction)
+
+    def getInfo(self):
+        return None
+
+
+class EventIn(InputWidget):
+    def __init__(self, name):
+        # Input event only has a write function
+        InputWidget.__init__(self, name, None, None)
+
+    def getInfo(self):
+        return None
+
+    def send(self):
         pass
 
 
-class AnalogIn(Widget):
-    def __init__(self, iface, name, unit, minUnit, maxUnit,
-                 minRaw, maxRaw, writeCallback, readCallback):
-        Widget.__init__(self, name)
-        self.value = com.corbomiteValue.CorbomiteValue(unit, minUnit, maxUnit,
-                                                       minRaw, maxRaw)
-        self.iface = iface
-        self.unit = unit
-        self.minUnit = minUnit
-        self.maxUnit = maxUnit
-        self.minRaw = minRaw
-        self.maxRaw = maxRaw
-        self.writeCallback = writeCallback
-        self.readCallback = readCallback
-
-    def onInit(self):
-        self.iface.writeFrame("%s %s %f %f %d %d" % (self.name, self.unit,
-                                                     self. minUnit,
-                                                     self.maxUnit, self.minRaw,
-                                                     self.maxRaw))
-
-
-class CorbomiteDevice():
+class CorbomiteDevice(com.corbomiteIo.CorbomiteIo):
     def __init__(self, interface):
+        com.corbomiteIo.CorbomiteIo.__init__(self, interface)
         self.widgets = []
         self.widgetDict = {}
         self.interface = interface
+        self.addWidget(EventOut('info', [self.onInfo]))
 
     def addWidget(self, widget):
         self.widgets.append(widget)
@@ -44,6 +78,15 @@ class CorbomiteDevice():
     def parseMessage(self, message):
         pass
 
-    def onInfo(self):
-        for w in self.widgets:
-            self.interface.write(w.onInfo())
+    def frameReceiver(self, frame):
+        name = frame.split(' ')[0]
+        print "looking for name", name
+        if name in self.widgetDict:
+            print self.widgetDict[name]
+            self.widgetDict[name].receive(frame)
+        else:
+            print "Unable to find a widget named", name
+
+    def onInfo(self, frame):
+        for w in self.widgets[1:]:
+            self.write(w.onInfo())
