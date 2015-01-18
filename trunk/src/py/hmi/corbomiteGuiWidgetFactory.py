@@ -3,7 +3,7 @@ import wx
 import math
 import time
 import csv
-import com.corbomiteValue
+import common.corbomiteValue
 types = {}
 
 
@@ -72,7 +72,7 @@ class CorbomiteGuiWidgetAnalogOut(CorbomiteGuiWidget):
     def __init__(self, parent, widget):
         CorbomiteGuiWidget.__init__(self, parent, widget)
         self.preferedPrefix, foo = \
-            com.corbomiteValue.calculatePrefix(self.widget.value.getUnit())
+            common.corbomiteValue.calculatePrefix(self.widget.value.getUnit())
         self.label = wx.StaticText(self, label=self.widget.name)
         self.valueText = wx.TextCtrl(self, style=wx.TE_PROCESS_ENTER)
         self.Bind(wx.EVT_TEXT_ENTER, self.onEnter, self.valueText)
@@ -93,7 +93,7 @@ class CorbomiteGuiWidgetAnalogOut(CorbomiteGuiWidget):
         self.spinUnit.SetValue(1)
         self.textUnit = wx.StaticText(
             self, -1,
-            com.corbomiteValue.prefixLetter(self.preferedPrefix))
+            common.corbomiteValue.prefixLetter(self.preferedPrefix))
         self.Bind(wx.EVT_SPIN, self.onPrefixSpin, self.spinUnit)
         self.Bind(wx.EVT_SPIN, self.onSpinX3, self.spinX3)
         self.Bind(wx.EVT_SPIN, self.onSpinX2, self.spinX2)
@@ -117,7 +117,7 @@ class CorbomiteGuiWidgetAnalogOut(CorbomiteGuiWidget):
 
     def onEnter(self, evt):
         text = self.valueText.GetValue()
-        value = com.corbomiteValue.stringToValue(text)
+        value = common.corbomiteValue.stringToValue(text)
         self.updateValue(value)
 
     def updateValue(self, value):
@@ -161,11 +161,11 @@ class CorbomiteGuiWidgetAnalogOut(CorbomiteGuiWidget):
     def updateValueText(self):
         dispVal = self.shadowValue/(10**(self.preferedPrefix*3))
         dispString = str(dispVal) + ' ' +\
-            com.corbomiteValue.prefixLetter(self.preferedPrefix) +\
+            common.corbomiteValue.prefixLetter(self.preferedPrefix) +\
             self.widget.value.unit
         self.valueText.SetValue(dispString)
         self.textUnit.SetLabel(
-            com.corbomiteValue.prefixLetter(self.preferedPrefix))
+            common.corbomiteValue.prefixLetter(self.preferedPrefix))
 
     def onSlide(self, evt):
         print "slideEvent"

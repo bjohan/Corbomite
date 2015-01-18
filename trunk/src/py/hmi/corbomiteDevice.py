@@ -1,12 +1,12 @@
 import corbomiteWidgets
-import com.corbomiteIo
+import common.corbomiteIo
 
 
-class CorbomiteDevice(com.corbomiteIo.CorbomiteIo):
+class CorbomiteDevice(common.corbomiteIo.CorbomiteIo):
     def __init__(self, io, frameCallbacks=[], initCallbacks=[],
                  eventCallbacks=[]):
-        com.corbomiteIo.CorbomiteIo.__init__(self, io, frameCallbacks,
-                                             initCallbacks, eventCallbacks)
+        common.corbomiteIo.CorbomiteIo.__init__(self, io, frameCallbacks,
+                                                initCallbacks, eventCallbacks)
         self.widgets = {}
         print "Sending info"
         self.writer.write("info")

@@ -1,5 +1,5 @@
-import com.corbomiteIo
-import com.corbomiteValue
+import common.corbomiteIo
+import common.corbomiteValue
 
 
 class InputWidget():
@@ -32,8 +32,9 @@ class AnalogIn(InputWidget):
     def __init__(self, name, unit, minUnit, maxUnit,
                  minRaw, maxRaw, sendFunction):
         InputWidget.__init__(self, name, sendFunction)
-        self.value = com.corbomiteValue.CorbomiteValue(unit, minUnit, maxUnit,
-                                                       minRaw, maxRaw)
+        self.value = common.corbomiteValue.CorbomiteValue(unit, minUnit,
+                                                          maxUnit, minRaw,
+                                                          maxRaw)
         self.lastValue = self.value.minRaw
 
     def receive(self, frame, interface):
@@ -63,11 +64,11 @@ class EventIn(InputWidget):
         pass
 
 
-class CorbomiteDevice(com.corbomiteIo.CorbomiteIo):
+class CorbomiteDevice(common.corbomiteIo.CorbomiteIo):
     def __init__(self, interface):
-        com.corbomiteIo.CorbomiteIo.__init__(self, interface)
         self.widgets = []
         self.widgetDict = {}
+        common.corbomiteIo.CorbomiteIo.__init__(self, interface)
         self.interface = interface
         self.addWidget(EventOut('info', [self.onInfo]))
 

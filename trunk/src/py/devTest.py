@@ -1,7 +1,7 @@
-import dev.corbomiteDevice
+import device.corbomiteDevice
 import sys
 import time
-import com.tcpCommunication
+import common.tcpCommunication
 
 
 class ReadWrite:
@@ -20,16 +20,18 @@ class ReadWrite:
         return self.writer.write(data)
 
 
-class TestDevice(dev.corbomiteDevice.CorbomiteDevice):
+class TestDevice(device.corbomiteDevice.CorbomiteDevice):
     def __init__(self, iface):
-        dev.corbomiteDevice.CorbomiteDevice.__init__(self, iface)
-        self.testAnalog = dev.corbomiteDevice.AnalogIn('analogtestsignal',
-                                                       'V', 0.0, 1.0, 0, 1024,
-                                                       [self.readAnalog])
+        device.corbomiteDevice.CorbomiteDevice.__init__(self, iface)
+        self.testAnalog = device.corbomiteDevice.AnalogIn('analogtestsignal',
+                                                          'V', 0.0, 1.0, 0,
+                                                          1024,
+                                                          [self.readAnalog])
         self.addWidget(self.testAnalog)
-        self.testEvent = dev.corbomiteDevice.EventOut('tja', [self.sayHello])
+        self.testEvent = device.corbomiteDevice.EventOut('tja',
+                                                         [self.sayHello])
         self.addWidget(self.testEvent)
-        self.addWidget(dev.corbomiteDevice.EventOut('bye', [self.onBye]))
+        self.addWidget(device.corbomiteDevice.EventOut('bye', [self.onBye]))
 
     def onBye(self, msg, interface):
         print "Quitting"
@@ -42,7 +44,7 @@ class TestDevice(dev.corbomiteDevice.CorbomiteDevice):
         print "HEEEEELLLLOOOOO"
         interface.write("HELLO")
 
-rw = com.tcpCommunication.TcpServer()
+rw = common.tcpCommunication.TcpServer()
 # rw = ReadWrite(sys.stdin, sys.stdout)
 td = TestDevice(rw)
 

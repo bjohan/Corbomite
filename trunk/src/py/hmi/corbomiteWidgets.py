@@ -1,4 +1,4 @@
-from com.corbomiteValue import CorbomiteValue
+from common.corbomiteValue import CorbomiteValue
 
 
 class CorbomiteWidget:
