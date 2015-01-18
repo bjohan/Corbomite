@@ -2,7 +2,7 @@ import corbomiteWidgets
 import common.corbomiteIo
 
 
-class CorbomiteDevice(common.corbomiteIo.CorbomiteIo):
+class CorbomiteClient(common.corbomiteIo.CorbomiteIo):
     def __init__(self, io, frameCallbacks=[], initCallbacks=[],
                  eventCallbacks=[]):
         common.corbomiteIo.CorbomiteIo.__init__(self, io, frameCallbacks,
@@ -25,7 +25,7 @@ class CorbomiteDevice(common.corbomiteIo.CorbomiteIo):
         self.writer.stop()
 
     def frameReceiver(self, frame):
-        # print "Got %d bytes in frame:"%(len(frame)), frame
+        # print "Got %d bytes in frame:" % (len(frame)), frame
         if frame == 'busy':
             self.busy = True
         elif frame == 'idle':
@@ -44,5 +44,4 @@ class CorbomiteDevice(common.corbomiteIo.CorbomiteIo):
                 print "WARNING: name in frame is not registered", frame
 
     def write(self, data):
-        print "Writing", data, "to device"
         self.writer.write(data)

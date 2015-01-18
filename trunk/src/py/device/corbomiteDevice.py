@@ -10,9 +10,9 @@ class InputWidget():
     def onInfo(self):
         info = self.getInfo()
         if info:
-            return "%s %s" % (self.name, self.getInfo())
+            return "%s %s %s" % (self.kind, self.name, self.getInfo())
         else:
-            return self.name
+            return "%s %s" % (self.kind, self.name)
 
     def send(self):
         self.sendFunction()
@@ -36,6 +36,7 @@ class AnalogIn(InputWidget):
                                                           maxUnit, minRaw,
                                                           maxRaw)
         self.lastValue = self.value.minRaw
+        self.kind = 'aout'
 
     def receive(self, frame, interface):
         interface.write("%s %s" % (self.name, self.lastValue))
@@ -47,6 +48,7 @@ class AnalogIn(InputWidget):
 class EventOut(OutputWidget):
     def __init__(self, name, receiveFunction):
         OutputWidget.__init__(self, name, None, receiveFunction)
+        self.kind = 'eout'
 
     def getInfo(self):
         return None
@@ -56,6 +58,7 @@ class EventIn(InputWidget):
     def __init__(self, name):
         # Input event only has a write function
         InputWidget.__init__(self, name, None, None)
+        self.kind = 'ein'
 
     def getInfo(self):
         return None
@@ -89,3 +92,4 @@ class CorbomiteDevice(common.corbomiteIo.CorbomiteIo):
     def onInfo(self, frame, interface):
         for w in self.widgets[1:]:
             self.write(w.onInfo())
+        self.write("idle")

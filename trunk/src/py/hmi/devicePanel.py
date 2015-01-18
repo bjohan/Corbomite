@@ -6,6 +6,7 @@ import wx.lib.newevent
 
 class DevicePanel(wx.Panel):
     def __init__(self, parent):
+        print "Device panel constructor start"
         wx.Panel.__init__(self, parent=parent, id=wx.ID_ANY)
         self.sizer = wx.BoxSizer(wx.VERTICAL)
         self.SetSizer(self.sizer)
@@ -14,6 +15,7 @@ class DevicePanel(wx.Panel):
         self.myInitEvent, self.EVT_MY_INIT_EVENT = wx.lib.newevent.NewEvent()
         self.Bind(self.EVT_MY_INIT_EVENT, self.receiveInitEvent)
         self.parent.Layout()
+        print "Device panel constructor finished"
 
     def receiveInitEvent(self, evt):
         widget = evt.attr1
@@ -24,8 +26,7 @@ class DevicePanel(wx.Panel):
 
     def initCallback(self, widget):
         evt = self.myInitEvent(attr1=widget)
-        wx.PostEvent(self.GetEventHandler(), evt)
-        pass
+        self.GetEventHandler().ProcessEvent(evt)
 
     def receiveCallback(self, data):
         pass

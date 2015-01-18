@@ -2,7 +2,7 @@ import wx
 import wx.aui
 import deviceManagerPanel
 import openDeviceDialog
-from client import corbomiteDevice
+from client import corbomiteClient
 import devicePanel
 import serial
 import sys
@@ -36,7 +36,7 @@ class RootFrame(wx.Frame):
 
     def openPort(self, port):
         dp = devicePanel.DevicePanel(self.deviceManager.nb)
-        corbomiteDevice.CorbomiteDevice(port, [dp.receiveCallback],
+        corbomiteClient.CorbomiteClient(port, [dp.receiveCallback],
                                         initCallbacks=[dp.initCallback])
         self.deviceManager.addPage(dp, port.port)
 
