@@ -1,4 +1,4 @@
-import corbomiteWidgets
+from client import corbomiteWidgets
 import wx
 import math
 import time

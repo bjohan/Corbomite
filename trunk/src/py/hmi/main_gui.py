@@ -2,7 +2,7 @@ import wx
 import wx.aui
 import deviceManagerPanel
 import openDeviceDialog
-import corbomiteDevice
+from client import corbomiteDevice
 import devicePanel
 import serial
 import sys
