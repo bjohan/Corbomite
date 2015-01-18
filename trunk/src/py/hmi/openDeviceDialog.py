@@ -2,6 +2,7 @@ import wx
 import serial
 import serial.tools.list_ports
 import serial
+import common.tcpCommunication
 
 
 class OpenDeviceDialog(wx.Dialog):
@@ -18,13 +19,27 @@ class OpenDeviceDialog(wx.Dialog):
         self.serialCombo = wx.ComboBox(self.panel,
                                        choices=self.getSerialPortList())
 
-        self.openSerialButton = wx.Button(self.panel, wx.ID_ANY, 'Open')
-        self.openSerialButton.Bind(wx.EVT_BUTTON, self.onOpen)
+        self.openSerialButton = wx.Button(self.panel, wx.ID_ANY, 'Open serial')
+        self.openSerialButton.Bind(wx.EVT_BUTTON, self.onOpenSerial)
 
         self.vertSizer.Add(self.serialText, 0, wx.ALL)
         self.serialSizer.Add(self.serialCombo, 0, wx.ALL)
         self.serialSizer.Add(self.openSerialButton, 0, wx.ALL)
         self.vertSizer.Add(self.serialSizer, 0, wx.ALL)
+
+        # TCP widgets
+        self.tcpSizer = wx.BoxSizer(wx.HORIZONTAL)
+        self.tcpLabel = wx.StaticText(self.panel, wx.ID_ANY,
+                                      'TCP Device:')
+        self.tcpText = wx.TextCtrl(self.panel, value='127.0.0.1')
+
+        self.openSerialButton = wx.Button(self.panel, wx.ID_ANY, 'Open tcp')
+        self.openSerialButton.Bind(wx.EVT_BUTTON, self.onOpenTcp)
+
+        self.vertSizer.Add(self.tcpLabel, 0, wx.ALL)
+        self.tcpSizer.Add(self.tcpText, 0, wx.ALL)
+        self.tcpSizer.Add(self.openSerialButton, 0, wx.ALL)
+        self.vertSizer.Add(self.tcpSizer, 0, wx.ALL)
 
         # Add open file button
         self.openSizer = wx.BoxSizer(wx.HORIZONTAL)
@@ -43,7 +58,13 @@ class OpenDeviceDialog(wx.Dialog):
 
         self.getSerialPortList()
 
-    def onOpen(self, fooEvent):
+    def onOpenTcp(self, fooEvent):
+        addr = self.tcpText.GetValue()
+        print "Opening", addr
+        self.port = common.tcpCommunication.TcpClient(addr, 8472)
+        self.EndModal(wx.ID_OK)
+
+    def onOpenSerial(self, fooEvent):
         print "Opening", self.serialCombo.GetValue()
         self.port = serial.Serial(self.serialCombo.GetValue(), 9600, timeout=1)
         self.EndModal(wx.ID_OK)
