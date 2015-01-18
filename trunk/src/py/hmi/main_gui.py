@@ -6,6 +6,7 @@ from client import corbomiteClient
 import devicePanel
 import serial
 import sys
+from common.tcpCommunication import TcpClient
 
 
 class RootFrame(wx.Frame):
@@ -27,7 +28,11 @@ class RootFrame(wx.Frame):
         self.Show()
         if len(sys.argv) > 1:
             for p in sys.argv[1:]:
-                self.openPort(serial.Serial(p, 9600, timeout=1))
+                (t, d) = p.split(':')
+                if t.upper() == 'SERIAL':
+                    self.openPort(serial.Serial(d, 9600, timeout=1))
+                else:
+                    self.openPort(TcpClient(d))
 
     def onOpenDevice(self, event):
         self.openDlg = openDeviceDialog.OpenDeviceDialog()

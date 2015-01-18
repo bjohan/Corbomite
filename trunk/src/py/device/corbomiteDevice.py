@@ -1,9 +1,19 @@
 import common.corbomiteIo
-import common.corbomiteValue
+from common.corbomiteValue import CorbomiteValue
 
 
-class InputWidget():
-    def __init__(self, name, sendFunction):
+class Widget:
+    def __init__(self, device, name):
+        self.device = device
+        self.name = name
+
+    def write(self, data):
+        self.device.write("%s %s" % (self.name, data))
+
+
+class InputWidget(Widget):
+    def __init__(self, device, name, sendFunction):
+        Widget.__init__(self, device, name)
         self.name = name
         self.sendFunction = sendFunction
 
@@ -19,8 +29,8 @@ class InputWidget():
 
 
 class OutputWidget(InputWidget):
-    def __init__(self, name, sendFunction, receiveCallbacks):
-        InputWidget.__init__(self, name, sendFunction)
+    def __init__(self, device, name, sendFunction, receiveCallbacks):
+        InputWidget.__init__(self, device, name, sendFunction)
         self.receiveCallbacks = receiveCallbacks
 
     def receive(self, data, interface):
@@ -29,14 +39,15 @@ class OutputWidget(InputWidget):
 
 
 class AnalogIn(InputWidget):
-    def __init__(self, name, unit, minUnit, maxUnit,
+    def __init__(self, device, name, unit, minUnit, maxUnit,
                  minRaw, maxRaw, sendFunction):
-        InputWidget.__init__(self, name, sendFunction)
-        self.value = common.corbomiteValue.CorbomiteValue(unit, minUnit,
-                                                          maxUnit, minRaw,
-                                                          maxRaw)
+        InputWidget.__init__(self, device, name, sendFunction)
+        self.value = CorbomiteValue(unit, minUnit, maxUnit, minRaw, maxRaw)
         self.lastValue = self.value.minRaw
-        self.kind = 'aout'
+        self.kind = 'ain'
+
+    def setRawValue(self, value):
+        self.write(str(value))
 
     def receive(self, frame, interface):
         interface.write("%s %s" % (self.name, self.lastValue))
@@ -45,9 +56,22 @@ class AnalogIn(InputWidget):
         return self.value.getInfoString()
 
 
+class AnalogOut(OutputWidget):
+    def __init__(self, device, name, unit, minUnit, maxUnit, minRaw, maxRaw,
+                 sendFunction, receiveCallbacks=[]):
+        OutputWidget.__init__(self, device, name, sendFunction,
+                              receiveCallbacks)
+        self.value = CorbomiteValue(unit, minUnit, maxUnit, minRaw, maxRaw)
+        self.lastValue = self.value.minRaw
+        self.kind = 'aout'
+
+    def getInfo(self):
+        return self.value.getInfoString()
+
+
 class EventOut(OutputWidget):
-    def __init__(self, name, receiveFunction):
-        OutputWidget.__init__(self, name, None, receiveFunction)
+    def __init__(self, device, name, receiveFunction):
+        OutputWidget.__init__(self, device, name, None, receiveFunction)
         self.kind = 'eout'
 
     def getInfo(self):
@@ -55,9 +79,9 @@ class EventOut(OutputWidget):
 
 
 class EventIn(InputWidget):
-    def __init__(self, name):
+    def __init__(self, device, name):
         # Input event only has a write function
-        InputWidget.__init__(self, name, None, None)
+        InputWidget.__init__(self, device, name, None, None)
         self.kind = 'ein'
 
     def getInfo(self):
@@ -73,7 +97,7 @@ class CorbomiteDevice(common.corbomiteIo.CorbomiteIo):
         self.widgetDict = {}
         common.corbomiteIo.CorbomiteIo.__init__(self, interface)
         self.interface = interface
-        self.addWidget(EventOut('info', [self.onInfo]))
+        self.addWidget(EventOut(self, 'info', [self.onInfo]))
 
     def addWidget(self, widget):
         self.widgets.append(widget)

@@ -1,7 +1,7 @@
 import device.corbomiteDevice
-import sys
 import time
 import common.tcpCommunication
+from device.corbomiteDevice import AnalogIn, AnalogOut, EventOut
 
 
 class ReadWrite:
@@ -23,19 +23,24 @@ class ReadWrite:
 class TestDevice(device.corbomiteDevice.CorbomiteDevice):
     def __init__(self, iface):
         device.corbomiteDevice.CorbomiteDevice.__init__(self, iface)
-        self.testAnalog = device.corbomiteDevice.AnalogIn('analogtestsignal',
-                                                          'V', 0.0, 1.0, 0,
-                                                          1024,
-                                                          [self.readAnalog])
-        self.addWidget(self.testAnalog)
-        self.testEvent = device.corbomiteDevice.EventOut('tja',
-                                                         [self.sayHello])
+        self.testAnalogIn = AnalogIn(self, 'aintest', 'V', 0.0, 1.0, 0,
+                                     1024, [self.readAnalog])
+        self.addWidget(self.testAnalogIn)
+        self.analogOut = AnalogOut(self, 'aouttest', 'V', 0, 1, 0, 1024,
+                                   self.sendAout, [self.receiveAout])
+        self.addWidget(self.analogOut)
+        self.testEvent = EventOut(self, 'tja', [self.sayHello])
         self.addWidget(self.testEvent)
-        self.addWidget(device.corbomiteDevice.EventOut('bye', [self.onBye]))
 
-    def onBye(self, msg, interface):
-        print "Quitting"
-        sys.exit()
+    def sendAout(self):
+        print "Send"
+        return str(3)
+
+    def receiveAout(self, data, interface):
+        print "Recv", data
+        value = int(data.split()[1])
+        self.testAnalogIn.setRawValue(value)
+        return str(3)
 
     def readAnalog(self, msg):
         return str(3.1415)
