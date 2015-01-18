@@ -1,6 +1,7 @@
 import dev.corbomiteDevice
 import sys
 import time
+import com.tcpCommunication
 
 
 class ReadWrite:
@@ -28,13 +29,21 @@ class TestDevice(dev.corbomiteDevice.CorbomiteDevice):
         self.addWidget(self.testAnalog)
         self.testEvent = dev.corbomiteDevice.EventOut('tja', [self.sayHello])
         self.addWidget(self.testEvent)
+        self.addWidget(dev.corbomiteDevice.EventOut('bye', [self.onBye]))
+
+    def onBye(self, msg, interface):
+        print "Quitting"
+        sys.exit()
 
     def readAnalog(self, msg):
         return str(3.1415)
 
     def sayHello(self, msg, interface):
         print "HEEEEELLLLOOOOO"
-rw = ReadWrite(sys.stdin, sys.stdout)
+        interface.write("HELLO")
+
+rw = com.tcpCommunication.TcpServer()
+# rw = ReadWrite(sys.stdin, sys.stdout)
 td = TestDevice(rw)
 
 time.sleep(1000)
