@@ -1,7 +1,8 @@
 import device.corbomiteDevice
 import time
 import common.tcpCommunication
-from device.corbomiteDevice import AnalogIn, AnalogOut, EventOut
+from device.corbomiteDevice import AnalogIn, AnalogOut, EventOut, DigitalOut,\
+    DigitalIn
 
 
 class ReadWrite:
@@ -24,26 +25,30 @@ class TestDevice(device.corbomiteDevice.CorbomiteDevice):
     def __init__(self, iface):
         device.corbomiteDevice.CorbomiteDevice.__init__(self, iface)
         self.testAnalogIn = AnalogIn(self, 'aintest', 'V', 0.0, 1.0, 0,
-                                     1024, [self.readAnalog])
+                                     1024)
         self.addWidget(self.testAnalogIn)
         self.analogOut = AnalogOut(self, 'aouttest', 'V', 0, 1, 0, 1024,
-                                   self.sendAout, [self.receiveAout])
+                                   [self.receiveAout])
         self.addWidget(self.analogOut)
         self.testEvent = EventOut(self, 'tja', [self.sayHello])
         self.addWidget(self.testEvent)
 
-    def sendAout(self):
-        print "Send"
-        return str(3)
+        self.digitalOut = DigitalOut(self, "dot", [self.receiveDout])
+        self.addWidget(self.digitalOut)
+
+        self.digitalIn = DigitalIn(self, "di")
+        self.addWidget(self.digitalIn)
+
+    def receiveDout(self, data, interface):
+        print "Recv", data
+        value = int(data.split()[1]) != 0
+        self.digitalIn.setValue(value)
 
     def receiveAout(self, data, interface):
         print "Recv", data
         value = int(data.split()[1])
         self.testAnalogIn.setRawValue(value)
         return str(3)
-
-    def readAnalog(self, msg):
-        return str(3.1415)
 
     def sayHello(self, msg, interface):
         print "HEEEEELLLLOOOOO"

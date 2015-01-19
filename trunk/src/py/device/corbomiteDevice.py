@@ -10,13 +10,6 @@ class Widget:
     def write(self, data):
         self.device.write("%s %s" % (self.name, data))
 
-
-class InputWidget(Widget):
-    def __init__(self, device, name, sendFunction):
-        Widget.__init__(self, device, name)
-        self.name = name
-        self.sendFunction = sendFunction
-
     def onInfo(self):
         info = self.getInfo()
         if info:
@@ -24,33 +17,56 @@ class InputWidget(Widget):
         else:
             return "%s %s" % (self.kind, self.name)
 
+    def valueToSendString(self):
+        print "Unimplemented conversion from value to send string"
+
     def send(self):
-        self.sendFunction()
+        self.device.write("%s %s" % (self.name, self.valueToSendString()))
 
 
-class OutputWidget(InputWidget):
-    def __init__(self, device, name, sendFunction, receiveCallbacks):
-        InputWidget.__init__(self, device, name, sendFunction)
+class InputWidget(Widget):
+    def __init__(self, device, name):
+        Widget.__init__(self, device, name)
+        self.name = name
+
+    def assignValue(self, value):
+        print "Assign value not implemented"
+
+    def setValue(self, value):
+        self.assignValue(value)
+        self.send()
+
+
+class OutputWidget(Widget):
+    def __init__(self, device, name, receiveCallbacks):
+        Widget.__init__(self, device, name)
         self.receiveCallbacks = receiveCallbacks
 
     def receive(self, data, interface):
+        print "Receive callback in", self.name
         for callback in self.receiveCallbacks:
             callback(data, interface)
 
 
 class AnalogIn(InputWidget):
     def __init__(self, device, name, unit, minUnit, maxUnit,
-                 minRaw, maxRaw, sendFunction):
-        InputWidget.__init__(self, device, name, sendFunction)
+                 minRaw, maxRaw):
+        InputWidget.__init__(self, device, name)
         self.value = CorbomiteValue(unit, minUnit, maxUnit, minRaw, maxRaw)
-        self.lastValue = self.value.minRaw
+        self.valueToSend = self.value.minRaw
         self.kind = 'ain'
 
     def setRawValue(self, value):
-        self.write(str(value))
+        self.value.setRaw(int(value))
+        self.valueToSend = self.value.getRaw()
+        self.send()
 
-    def receive(self, frame, interface):
-        interface.write("%s %s" % (self.name, self.lastValue))
+    def valueToSendString(self):
+        return str(self.valueToSend)
+
+    def assignValue(self, value):
+        self.value.setUnit(value)
+        self.valueToSend = self.value.getRaw()
 
     def getInfo(self):
         return self.value.getInfoString()
@@ -58,20 +74,22 @@ class AnalogIn(InputWidget):
 
 class AnalogOut(OutputWidget):
     def __init__(self, device, name, unit, minUnit, maxUnit, minRaw, maxRaw,
-                 sendFunction, receiveCallbacks=[]):
-        OutputWidget.__init__(self, device, name, sendFunction,
-                              receiveCallbacks)
+                 receiveCallbacks=[]):
+        OutputWidget.__init__(self, device, name, receiveCallbacks)
         self.value = CorbomiteValue(unit, minUnit, maxUnit, minRaw, maxRaw)
         self.lastValue = self.value.minRaw
         self.kind = 'aout'
+
+    def addReceiver(self, receiveCallback):
+        self.receiveCallbacks.append(receiveCallback)
 
     def getInfo(self):
         return self.value.getInfoString()
 
 
 class EventOut(OutputWidget):
-    def __init__(self, device, name, receiveFunction):
-        OutputWidget.__init__(self, device, name, None, receiveFunction)
+    def __init__(self, device, name, receiveCallbacks):
+        OutputWidget.__init__(self, device, name, receiveCallbacks)
         self.kind = 'eout'
 
     def getInfo(self):
@@ -87,8 +105,35 @@ class EventIn(InputWidget):
     def getInfo(self):
         return None
 
-    def send(self):
-        pass
+
+class DigitalIn(InputWidget):
+    def __init__(self, device, name):
+        InputWidget.__init__(self, device, name)
+        self.valueToSend = False
+        self.kind = 'din'
+
+    def valueToSendString(self):
+        if self.valueToSend:
+            return "1"
+        return "0"
+
+    def assignValue(self, value):
+        self.valueToSend = (value != 0)
+
+    def getInfo(self):
+        return None
+
+
+class DigitalOut(OutputWidget):
+    def __init__(self, device, name, receiveCallbacks=[]):
+        OutputWidget.__init__(self, device, name, receiveCallbacks)
+        self.kind = 'dout'
+
+    def addReceiver(self, receiveCallback):
+        self.receiveCallbacks.append(receiveCallback)
+
+    def getInfo(self):
+        return None
 
 
 class CorbomiteDevice(common.corbomiteIo.CorbomiteIo):
