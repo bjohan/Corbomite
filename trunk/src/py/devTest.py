@@ -2,7 +2,7 @@ import device.corbomiteDevice
 import time
 import common.tcpCommunication
 from device.corbomiteDevice import AnalogIn, AnalogOut, EventOut, DigitalOut,\
-    DigitalIn
+    DigitalIn, TraceIn
 
 
 class ReadWrite:
@@ -39,6 +39,10 @@ class TestDevice(device.corbomiteDevice.CorbomiteDevice):
         self.digitalIn = DigitalIn(self, "di")
         self.addWidget(self.digitalIn)
 
+        self.traceIn = TraceIn(self, "ti", "S", 0.0, 10.0, 0, 1024,
+                               "V", 0.0, 10.0, 0, 1024)
+        self.addWidget(self.traceIn)
+
     def receiveDout(self, data, interface):
         print "Recv", data
         value = int(data.split()[1]) != 0
@@ -53,6 +57,9 @@ class TestDevice(device.corbomiteDevice.CorbomiteDevice):
     def sayHello(self, msg, interface):
         print "HEEEEELLLLOOOOO"
         interface.write("HELLO")
+        self.traceIn.setValue((0, 0))
+        self.traceIn.setValue((0.50, 0.5))
+        self.traceIn.setValue((1, 0))
 
 rw = common.tcpCommunication.TcpServer()
 # rw = ReadWrite(sys.stdin, sys.stdout)

@@ -136,6 +136,37 @@ class DigitalOut(OutputWidget):
         return None
 
 
+class TraceIn(InputWidget):
+    def __init__(self, device, name, unitX, minUnitX, maxUnitX,
+                 minRawX, maxRawX, unitY, minUnitY, maxUnitY, minRawY,
+                 maxRawY):
+        InputWidget.__init__(self, device, name)
+        self.valueX =\
+            CorbomiteValue(unitX, minUnitX, maxUnitX, minRawX, maxRawX)
+        self.valueY =\
+            CorbomiteValue(unitY, minUnitY, maxUnitY, minRawY, maxRawY)
+        self.valueToSend = (self.valueX.minRaw, self.valueY.minRaw)
+        self.kind = 'tin'
+
+    def setRawValue(self, value):
+        self.valueX.setRaw(int(value[0]))
+        self.valueY.setRaw(int(value[1]))
+        self.valueToSend = (self.valueX.getRaw(), self.valueY.getRaw())
+        self.send()
+
+    def valueToSendString(self):
+        return "%s %s" % (self.valueToSend[0], self.valueToSend[1])
+
+    def assignValue(self, value):
+        self.valueX.setUnit(value[0])
+        self.valueY.setUnit(value[1])
+        self.valueToSend = (self.valueX.getRaw(), self.valueY.getRaw())
+
+    def getInfo(self):
+        return "%s %s" %\
+            (self.valueX.getInfoString(), self.valueY.getInfoString())
+
+
 class CorbomiteDevice(common.corbomiteIo.CorbomiteIo):
     def __init__(self, interface):
         self.widgets = []
