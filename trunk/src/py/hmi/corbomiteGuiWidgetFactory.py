@@ -209,6 +209,8 @@ class CorbomiteGuiWidgetTraceIn(CorbomiteGuiWidget):
         self.Bind(wx.EVT_PAINT, self.onPaint)
         self.Bind(wx.EVT_SIZE, self.sizeEvent)
         parent.Bind(wx.EVT_MOUSEWHEEL, self.onMouseWheel)
+
+        self.memory = {}
         self.yWeight = 10
         self.x = []
         self.y = []
@@ -227,6 +229,19 @@ class CorbomiteGuiWidgetTraceIn(CorbomiteGuiWidget):
         self.popupmenu = wx.Menu()
         self.Bind(wx.EVT_MENU, self.onSaveTrace, self.popupmenu.Append(-1,
                   "Save trace"))
+        self.Bind(wx.EVT_MENU, self.onMemorizeTrace, self.popupmenu.Append(-1,
+                  "Memorize trace"))
+        self.Bind(wx.EVT_MENU, self.onMath, self.popupmenu.Append(-1,
+                  "Math"))
+
+    def onMath(self, evt):
+        pass
+
+    def onMemorizeTrace(self, evt):
+        dlg = wx.TextEntryDialog(self, "Enter name of trace", "Enter name")
+        dlg.ShowModal()
+        print dlg.GetValue()
+        self.memory[dlg.GetValue] = (self.x, self.y)
 
     def onSaveTrace(self, event):
         fd = wx.FileDialog(self, 'Save trace', "", "",
