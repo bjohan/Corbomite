@@ -17,16 +17,14 @@ class DevicePanel(wx.Panel):
         self.parent.Layout()
         print "Device panel constructor finished"
 
-    def receiveInitEvent(self, evt):
-        widget = evt.attr1
+    def receiveInitEvent(self, widget):
         new = corbomiteGuiWidgetFactory.createWidget(self, widget)
         if new is not None:
             self.sizer.Add(new, new.yWeight, wx.EXPAND)
             self.sizer.Layout()
 
     def initCallback(self, widget):
-        evt = self.myInitEvent(attr1=widget)
-        self.GetEventHandler().ProcessEvent(evt)
+        wx.CallAfter(self.receiveInitEvent, widget)
 
     def receiveCallback(self, data):
         pass
