@@ -4,7 +4,26 @@ import math
 import time
 import csv
 import common.corbomiteValue
+import bisect
 types = {}
+
+
+def resample(xData, yData, newSamplePoints):
+    cp = 0
+    xDataAugmented = [xData[0]] + xData + [xData[-1]]
+    yDataAugmented = [yData[0]] + yData + [yData[-1]]
+    resampled = [0*yData[0]]*len(newSamplePoints)
+    idx = 0
+    for p in newSamplePoints:
+        cp = bisect.bisect(xData[cp:], p)
+        x0 = xDataAugmented[cp-1]
+        x1 = xDataAugmented[cp]
+        y0 = yDataAugmented[cp-1]
+        y1 = yDataAugmented[cp]
+        scale = p/(x1-x0)
+        y = y0+scale*(y1-y0)
+        resampled[idx] = y
+    return resampled
 
 
 class CorbomiteGuiWidget(wx.Panel):
@@ -115,20 +134,28 @@ class CorbomiteGuiWidgetAnalogOut(CorbomiteGuiWidget):
         self.sizer.Add(self.spinUnit, 1*3)
         self.sizer.Add(self.slider, 12*3)
 
+    def clampValue(self, value):
+        if value > self.widget.value.maxUnit:
+            value = self.widget.value.maxUnit
+        if value < self.widget.value.minUnit:
+            value = self.widget.value.minUnit
+        return value
+
     def onEnter(self, evt):
         text = self.valueText.GetValue()
-        value = common.corbomiteValue.stringToValue(text)
+        value = self.clampValue(common.corbomiteValue.stringToValue(text))
         self.updateValue(value)
+        self.setSlider()
 
     def updateValue(self, value):
-        self.shadowValue = value
+        self.shadowValue = self.clampValue(value)
         self.updateValueText()
         self.widget.setValue(value)
 
     def setSlider(self):
         sval = float(self.slider.GetMax()) *\
             float(self.shadowValue-self.widget.value.minUnit) /\
-            float(self.widget.value.maxUnit)
+            float(self.widget.value.maxUnit-self.widget.value.minUnit)
         self.slider.SetValue(sval)
 
     def spinDelta(self, spinner):
@@ -231,10 +258,10 @@ class CorbomiteGuiWidgetTraceIn(CorbomiteGuiWidget):
                   "Save trace"))
         self.Bind(wx.EVT_MENU, self.onMemorizeTrace, self.popupmenu.Append(-1,
                   "Memorize trace"))
-        self.Bind(wx.EVT_MENU, self.onMath, self.popupmenu.Append(-1,
-                  "Math"))
+        self.Bind(wx.EVT_MENU, self.onSubtract, self.popupmenu.Append(-1,
+                  "Subtract mem"))
 
-    def onMath(self, evt):
+    def onSubtract(self, evt):
         pass
 
     def onMemorizeTrace(self, evt):
