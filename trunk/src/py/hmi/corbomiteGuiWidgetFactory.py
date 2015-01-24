@@ -253,22 +253,46 @@ class CorbomiteGuiWidgetTraceIn(CorbomiteGuiWidget):
         self.timer.Start(1000)
         self.time = time.time()
 
+        self.memorizedTraceMenu = wx.Menu()
         self.popupmenu = wx.Menu()
         self.Bind(wx.EVT_MENU, self.onSaveTrace, self.popupmenu.Append(-1,
                   "Save trace"))
         self.Bind(wx.EVT_MENU, self.onMemorizeTrace, self.popupmenu.Append(-1,
                   "Memorize trace"))
+        self.Bind(wx.EVT_MENU, self.onLoadTrace,
+                  self.memorizedTraceMenu.Append(-1, "Load trace"))
+        self.memorizedTraceMenu.AppendSeparator()
+        self.popupmenu.AppendSubMenu(self.memorizedTraceMenu,
+                                     "Memorized traces")
         self.Bind(wx.EVT_MENU, self.onSubtract, self.popupmenu.Append(-1,
                   "Subtract mem"))
 
     def onSubtract(self, evt):
         pass
 
+    def storeTraceInMem(self, trace, name):
+        self.memory[name] = trace
+        self.memorizedTraceMenu.Append(-1, name)
+
+    def onLoadTrace(self, event):
+        fd = wx.FileDialog(self, 'Load trace', "", "",
+                           'Comma separated files (*.csv)|*.csv', wx.FD_OPEN)
+        fd.ShowModal()
+        path = fd.GetPath()
+        print "Path:", path
+        with open(path, 'rb') as csvfile:
+            rd = list(csv.reader(csvfile))
+            print rd
+            (x, y) = (rd[0], rd[1])
+            dlg = wx.TextEntryDialog(self, "Enter name of trace", "Enter name",
+                                     path.split('.')[0].split('/')[-1])
+            dlg.ShowModal()
+            self.storeTraceInMem((x, y), dlg.GetValue())
+
     def onMemorizeTrace(self, evt):
         dlg = wx.TextEntryDialog(self, "Enter name of trace", "Enter name")
         dlg.ShowModal()
-        print dlg.GetValue()
-        self.memory[dlg.GetValue] = (self.x, self.y)
+        self.storeTraceInMem((self.x, self.y), dlg.GetValue())
 
     def onSaveTrace(self, event):
         fd = wx.FileDialog(self, 'Save trace', "", "",
@@ -279,11 +303,6 @@ class CorbomiteGuiWidgetTraceIn(CorbomiteGuiWidget):
         wr = csv.writer(outFile)
         wr.writerow(self.x)
         wr.writerow(self.y)
-
-    def OnPopupItemSelected(self, event):
-        item = self.popupmenu.FindItemById(event.GetId())
-        text = item.GetText()
-        wx.MessageBox("You selected item '%s'" % text)
 
     def onTimer(self, evt):
         if time.time() > self.time:
