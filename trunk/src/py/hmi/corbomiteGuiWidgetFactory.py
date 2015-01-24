@@ -135,6 +135,10 @@ class CorbomiteGuiWidgetAnalogOut(CorbomiteGuiWidget):
         self.sizer.Add(self.slider, 12*3)
 
     def clampValue(self, value):
+        tempValue = self.widget.value
+        tempValue.setUnit(value)
+        tempValue.setRaw(int(tempValue.getRaw()))
+        value = tempValue.getUnit()
         if value > self.widget.value.maxUnit:
             value = self.widget.value.maxUnit
         if value < self.widget.value.minUnit:
@@ -195,7 +199,6 @@ class CorbomiteGuiWidgetAnalogOut(CorbomiteGuiWidget):
             common.corbomiteValue.prefixLetter(self.preferedPrefix))
 
     def onSlide(self, evt):
-        print "slideEvent"
         self.updateValue(self.widget.value.maxUnit *
                          float(self.slider.GetValue()) /
                          float(self.slider.GetMax()))
