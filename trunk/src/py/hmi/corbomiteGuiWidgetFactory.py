@@ -240,7 +240,8 @@ class CorbomiteGuiWidgetTraceIn(CorbomiteGuiWidget):
         self.Bind(wx.EVT_SIZE, self.sizeEvent)
         parent.Bind(wx.EVT_MOUSEWHEEL, self.onMouseWheel)
 
-        self.memory = {}
+        self.plotTraces = []
+        self.traceMemory = {}
         self.yWeight = 10
         self.x = []
         self.y = []
@@ -274,7 +275,7 @@ class CorbomiteGuiWidgetTraceIn(CorbomiteGuiWidget):
         pass
 
     def storeTraceInMem(self, trace, name):
-        self.memory[name] = trace
+        self.traceMemory[name] = trace
         self.memorizedTraceMenu.Append(-1, name)
 
     def onLoadTrace(self, event):
@@ -316,11 +317,15 @@ class CorbomiteGuiWidgetTraceIn(CorbomiteGuiWidget):
         widget = evt.attr1
         if len(widget.trace) == 0:
             self.rePaint()
+        self.traceMemory[widget.name] = [[], []]
         self.x = []
         self.y = []
         for p in widget.trace:
             self.x.append(self.widget.value[0].toUnit(p[0]))
             self.y.append(self.widget.value[1].toUnit(p[1]))
+            trace = self.traceMemory[widget.name]
+            trace[0].append(self.widget.value[0].toUnit(p[0]))
+            trace[1].append(self.widget.value[1].toUnit(p[1]))
         self.time = time.time()
 
     def autoScale(self):
@@ -461,7 +466,7 @@ class CorbomiteGuiWidgetTraceIn(CorbomiteGuiWidget):
             dc.DrawLine(x, 0, x, winy)
             dc.DrawText(self.widget.value[0].getPrecisionString(xa, 2), x, 0)
 
-    def drawPlot(self, dc):
+    def drawPlot(self, dc, name):
         (winx, winy) = self.GetSize()
         if self.xMax != self.xMin:
             xpixelsPerUnit = winx/(self.xMax-self.xMin)
@@ -469,15 +474,17 @@ class CorbomiteGuiWidgetTraceIn(CorbomiteGuiWidget):
         else:
             xpixelsPerUnit = winx
             ypixelsPerUnit = winy
-        points = zip(self.x, self.y)
-        for i in range(len(points)-1):
-            p1 = points[i]
-            p2 = points[i+1]
-            x1 = min((p1[0]-self.xMin)*xpixelsPerUnit, winx+1)
-            y1 = min(winy-(p1[1]-self.yMin)*ypixelsPerUnit, winy+1)
-            x2 = min((p2[0]-self.xMin)*xpixelsPerUnit, winx+1)
-            y2 = min(winy-(p2[1]-self.yMin)*ypixelsPerUnit, winy+1)
-            dc.DrawLine(x1, y1, x2, y2)
+        # points = zip(self.x, self.y)
+        if name in self.traceMemory:
+            points = zip(self.traceMemory[name][0], self.traceMemory[name][1])
+            for i in range(len(points)-1):
+                p1 = points[i]
+                p2 = points[i+1]
+                x1 = min((p1[0]-self.xMin)*xpixelsPerUnit, winx+1)
+                y1 = min(winy-(p1[1]-self.yMin)*ypixelsPerUnit, winy+1)
+                x2 = min((p2[0]-self.xMin)*xpixelsPerUnit, winx+1)
+                y2 = min(winy-(p2[1]-self.yMin)*ypixelsPerUnit, winy+1)
+                dc.DrawLine(x1, y1, x2, y2)
 
     def render(self, dc):
         c = wx.Colour(255, 255, 255)
@@ -485,7 +492,7 @@ class CorbomiteGuiWidgetTraceIn(CorbomiteGuiWidget):
         dc.SetBackground(brush)
         dc.Clear()
         self.drawScale(dc)
-        self.drawPlot(dc)
+        self.drawPlot(dc, self.widget.name)
 types[corbomiteWidgets.TraceInWidget] = CorbomiteGuiWidgetTraceIn
 
 
