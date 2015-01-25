@@ -1,6 +1,5 @@
 from client import corbomiteWidgets
 import wx
-import math
 import time
 import csv
 import common.corbomiteValue
@@ -65,7 +64,6 @@ class CorbomiteGuiWidgetDigitalIn(CorbomiteGuiWidget):
         self.box = wx.CheckBox(parent=self, label=widget.name)
         self.box.Enable(False)
         self.sizer.Add(self.box, 1)
-        # widget.addCallback(self.update)
 
     def update(self, evt):
         if(evt.attr1.value > 0):
@@ -210,7 +208,6 @@ class CorbomiteGuiWidgetAnalogIn(CorbomiteGuiWidget):
         CorbomiteGuiWidget.__init__(self, parent, widget)
         self.gauge = wx.Gauge(self, wx.ID_ANY, widget.value.maxRaw -
                               widget.value.minRaw)
-        # widget.addCallback(self.update)
         self.label = wx.StaticText(self, label=self.widget.name)
         self.sizer.Add(self.label, 1)
         self.sizer.Add(self.gauge, 3)
@@ -219,8 +216,6 @@ class CorbomiteGuiWidgetAnalogIn(CorbomiteGuiWidget):
         self.gauge.SetValue(event.attr1.value.getRaw())
         self.label.SetLabel(self.widget.name + ' ' +
                             event.attr1.value.getValueString())
-        # self.label.SetLabel(self.widget.name)
-        # wx.Yield()
 types[corbomiteWidgets.AnalogInWidget] = CorbomiteGuiWidgetAnalogIn
 
 
@@ -243,15 +238,9 @@ class CorbomiteGuiWidgetTraceIn(CorbomiteGuiWidget):
         self.plotTraces = []
         self.traceMemory = {}
         self.yWeight = 10
-        self.x = []
-        self.y = []
         self.lastCoords = None
         self.pixelsPerGraticuleLine = 75
-        for i in range(1000):
-            self.x.append(float(i))
-            self.y.append(math.sin(float(i)/100.0))
         self.autoScale()
-        # self.widget.addCallback(self.update)
         self.timer = wx.Timer(self)
         self.Bind(wx.EVT_TIMER, self.onTimer, self.timer)
         self.timer.Start(1000)
@@ -286,10 +275,8 @@ class CorbomiteGuiWidgetTraceIn(CorbomiteGuiWidget):
         print "Path:", path
         with open(path, 'rb') as csvfile:
             rd = list(csv.reader(csvfile))
-            print rd
             x = [float(x) for x in rd[0]]
             y = [float(y) for y in rd[1]]
-            # (x, y) = (float(rd[0]), float(rd[1]))
             dlg = wx.TextEntryDialog(self, "Enter name of trace", "Enter name",
                                      path.split('.')[0].split('/')[-1])
             dlg.ShowModal()
@@ -298,7 +285,9 @@ class CorbomiteGuiWidgetTraceIn(CorbomiteGuiWidget):
     def onMemorizeTrace(self, evt):
         dlg = wx.TextEntryDialog(self, "Enter name of trace", "Enter name")
         dlg.ShowModal()
-        self.storeTraceInMem((self.x, self.y), dlg.GetValue())
+        x = self.traceMemory[self.widget.name][0]
+        y = self.traceMemory[self.widget.name][1]
+        self.storeTraceInMem((x, y), dlg.GetValue())
 
     def onSaveTrace(self, event):
         fd = wx.FileDialog(self, 'Save trace', "", "",
@@ -307,8 +296,8 @@ class CorbomiteGuiWidgetTraceIn(CorbomiteGuiWidget):
         path = fd.GetPath()
         outFile = open(path, 'wb')
         wr = csv.writer(outFile)
-        wr.writerow(self.x)
-        wr.writerow(self.y)
+        wr.writerow(self.traceMemory[self.widget.name][0])
+        wr.writerow(self.traceMemory[self.widget.name][1])
 
     def onTimer(self, evt):
         if time.time() > self.time:
@@ -320,21 +309,21 @@ class CorbomiteGuiWidgetTraceIn(CorbomiteGuiWidget):
         if len(widget.trace) == 0:
             self.rePaint()
         self.traceMemory[widget.name] = [[], []]
-        self.x = []
-        self.y = []
         for p in widget.trace:
-            self.x.append(self.widget.value[0].toUnit(p[0]))
-            self.y.append(self.widget.value[1].toUnit(p[1]))
             trace = self.traceMemory[widget.name]
             trace[0].append(self.widget.value[0].toUnit(p[0]))
             trace[1].append(self.widget.value[1].toUnit(p[1]))
         self.time = time.time()
 
     def autoScale(self):
-        self.xMin = min(self.x)
-        self.xMax = max(self.x)
-        self.yMin = min(self.y)
-        self.yMax = max(self.y)
+        if self.widget.name in self.traceMemory:
+            self.xMin = min(self.traceMemory[self.widget.name][0])
+            self.xMax = max(self.traceMemory[self.widget.name][0])
+            self.yMin = min(self.traceMemory[self.widget.name][1])
+            self.yMax = max(self.traceMemory[self.widget.name][1])
+        else:
+            self.xMin = self.yMin = 0
+            self.xMax = self.yMax = 1
 
     def onLeftDown(self, evt):
         self.leftPressed = True
