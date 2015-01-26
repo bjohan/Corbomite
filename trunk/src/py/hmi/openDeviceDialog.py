@@ -16,14 +16,21 @@ class OpenDeviceDialog(wx.Dialog):
         self.serialSizer = wx.BoxSizer(wx.HORIZONTAL)
         self.serialText = wx.StaticText(self.panel, wx.ID_ANY,
                                         'Serial Device:')
-        self.serialCombo = wx.ComboBox(self.panel,
-                                       choices=self.getSerialPortList())
-
+        ports = self.getSerialPortList()
+        self.serialCombo = wx.ComboBox(self.panel, value=ports[0],
+                                       choices=ports)
+        self.baudRatecombo = wx.ComboBox(self.panel, value="9600",
+                                         choices=["300", "1200", "2400",
+                                                  "4800", "9600", "14400",
+                                                  "19200", "28800", "38400",
+                                                  "57600", "115200", "230400",
+                                                  "460800", "921600"])
         self.openSerialButton = wx.Button(self.panel, wx.ID_ANY, 'Open serial')
         self.openSerialButton.Bind(wx.EVT_BUTTON, self.onOpenSerial)
 
         self.vertSizer.Add(self.serialText, 0, wx.ALL)
         self.serialSizer.Add(self.serialCombo, 0, wx.ALL)
+        self.serialSizer.Add(self.baudRatecombo, 0, wx.ALL)
         self.serialSizer.Add(self.openSerialButton, 0, wx.ALL)
         self.vertSizer.Add(self.serialSizer, 0, wx.ALL)
 
@@ -66,7 +73,9 @@ class OpenDeviceDialog(wx.Dialog):
 
     def onOpenSerial(self, fooEvent):
         print "Opening", self.serialCombo.GetValue()
-        self.port = serial.Serial(self.serialCombo.GetValue(), 9600, timeout=1)
+        self.port = serial.Serial(self.serialCombo.GetValue(),
+                                  int(self.baudRatecombo.GetValue()),
+                                  timeout=1)
         self.EndModal(wx.ID_OK)
 
     def getSerialPortList(self):
