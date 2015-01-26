@@ -245,7 +245,7 @@ class CorbomiteGuiWidgetTraceIn(CorbomiteGuiWidget):
         self.Bind(wx.EVT_TIMER, self.onTimer, self.timer)
         self.timer.Start(1000)
         self.time = time.time()
-
+        self.subtract = []
         self.memorizedTraceMenu = wx.Menu()
         self.popupmenu = wx.Menu()
         self.Bind(wx.EVT_MENU, self.onSaveTrace, self.popupmenu.Append(-1,
@@ -261,7 +261,16 @@ class CorbomiteGuiWidgetTraceIn(CorbomiteGuiWidget):
                   "Subtract mem"))
 
     def onSubtract(self, evt):
-        pass
+        dlg = wx.SingleChoiceDialog(self, "Choose a trace to subtract from",
+                                    "Subtract", list(self.traceMemory))
+        dlg.ShowModal()
+        v1 = dlg.GetStringSelection()
+        dlg = wx.SingleChoiceDialog(self, "Choose a trace to subtract",
+                                    "Subtract", list(self.traceMemory))
+        dlg.ShowModal()
+        v2 = dlg.GetStringSelection()
+        if v1 in self.traceMemory and v2 in self.traceMemory:
+            self.subtract = [v1, v2]
 
     def storeTraceInMem(self, trace, name):
         self.traceMemory[name] = trace
@@ -480,10 +489,21 @@ class CorbomiteGuiWidgetTraceIn(CorbomiteGuiWidget):
         dc.SetBackground(brush)
         dc.Clear()
         self.drawScale(dc)
-
+        clist = ['BLACK', 'BROWN', 'RED', 'ORANGE', 'YELLOW', 'GREEN', 'BLUE',
+                 'VIOLET', 'GREY', 'WHITE']
+        i = 0
+        (w, h) = self.GetSize()
         for name in self.traceMemory:
+            c = wx.NamedColour(clist[i])
+            dc.SetPen(wx.Pen(c))
             points = zip(self.traceMemory[name][0], self.traceMemory[name][1])
             self.drawPlot(dc, name, points)
+            dc.SetTextForeground(c)
+            dc.DrawText(name, w-100, i*15+15)
+            i += 1
+            if i >= len(clist):
+                i = 0
+
 
 types[corbomiteWidgets.TraceInWidget] = CorbomiteGuiWidgetTraceIn
 
