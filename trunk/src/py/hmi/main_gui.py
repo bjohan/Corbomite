@@ -28,9 +28,9 @@ class RootFrame(wx.Frame):
         self.Show()
         if len(sys.argv) > 1:
             for p in sys.argv[1:]:
-                (t, d) = p.split(':')
+                (t, d, b) = p.split(':')
                 if t.upper() == 'SERIAL':
-                    self.openPort(serial.Serial(d, 9600, timeout=1))
+                    self.openPort(serial.Serial(d, int(b), timeout=1))
                 else:
                     self.openPort(TcpClient(d))
 
