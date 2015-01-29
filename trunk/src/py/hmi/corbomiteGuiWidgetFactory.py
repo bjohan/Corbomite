@@ -3,25 +3,60 @@ import wx
 import time
 import csv
 import common.corbomiteValue
-import bisect
 types = {}
 
 
-def resample(xData, yData, newSamplePoints):
-    cp = 0
-    xDataAugmented = [xData[0]] + xData + [xData[-1]]
-    yDataAugmented = [yData[0]] + yData + [yData[-1]]
-    resampled = [0*yData[0]]*len(newSamplePoints)
-    idx = 0
-    for p in newSamplePoints:
-        cp = bisect.bisect(xData[cp:], p)
-        x0 = xDataAugmented[cp-1]
-        x1 = xDataAugmented[cp]
-        y0 = yDataAugmented[cp-1]
-        y1 = yDataAugmented[cp]
-        scale = p/(x1-x0)
-        y = y0+scale*(y1-y0)
-        resampled[idx] = y
+# WHARRRR!! Teh horror is horrible here!! :/
+def resample(t1, x):
+    """Resample traces, t1 is a tuple with (x, y) t2 is a list of points
+       this function returns a trace (Tuple4 with x and y) with values at
+       the points in t1[0] and x2"""
+    x2 = x[:]
+    rStart = max(t1[0][0], x2[0])
+    rStop = min(t1[0][-1], x2[-1])
+    i1 = 0
+    i2 = 0
+    x1 = t1[0]
+    xp = rStart
+    cpy = False
+    resampled = ([], [])
+    xp = min(t1[0][0], x2[0])
+    x2.insert(0, x2[0]-1)   # Ugly fix to make sure that first value in x2 is
+    # not skipped
+
+    while True:
+        if (xp >= rStart) and (xp <= rStop):
+            if cpy:
+                resampled[0].append(xp)
+                resampled[1].append(t1[1][i1])
+            else:
+                sf = (xp - x1[i1])/(x1[i1+1] - x1[i1])
+                yd = (t1[1][i1+1]-t1[1][i1])*sf
+                ynew = t1[1][i1]+yd
+                resampled[0].append(xp)
+                resampled[1].append(ynew)
+
+        if i1 + 1 == len(x1) or i2 + 1 == len(x2):
+            break
+
+        if x1[i1+1] < x2[i2+1]:
+            i1 += 1
+            xp = x1[i1]
+            cpy = True
+        elif x2[i2+1] < x1[i1+1]:
+            i2 += 1
+            xp = x2[i2]
+            cpy = False
+        else:  # x1 and x2 are equal
+            i1 += 1
+            i2 += 1
+            xp = x1[i1]
+            cpy = True
+
+        if x1[i1] > rStop and x2[i2] > rStop:
+            break
+        if i1 == len(x1) or i2 == len(x2):
+            break
     return resampled
 
 
@@ -494,15 +529,29 @@ class CorbomiteGuiWidgetTraceIn(CorbomiteGuiWidget):
         i = 0
         (w, h) = self.GetSize()
         for name in self.traceMemory:
-            c = wx.NamedColour(clist[i])
+            c = wx.NamedColour(clist[i % len(clist)])
             dc.SetPen(wx.Pen(c))
             points = zip(self.traceMemory[name][0], self.traceMemory[name][1])
             self.drawPlot(dc, name, points)
             dc.SetTextForeground(c)
             dc.DrawText(name, w-100, i*15+15)
             i += 1
-            if i >= len(clist):
-                i = 0
+            # if i >= len(clist):
+            #    i = 0
+        if len(self.subtract) == 2:
+            resampled1 = resample(self.traceMemory[self.subtract[0]],
+                                  self.traceMemory[self.subtract[1]][0])
+            resampled2 = resample(self.traceMemory[self.subtract[1]],
+                                  self.traceMemory[self.subtract[0]][0])
+
+            for j in range(len(resampled1[0])):
+                resampled1[1][j] -= resampled2[1][j]
+            points = zip(resampled1[0], resampled1[1])
+            c = wx.NamedColour("MAGENTA")
+            dc.SetPen(wx.Pen(c))
+            dc.SetTextForeground(c)
+            self.drawPlot(dc, "subtract", points)
+            dc.DrawText("subtract", w-100, i*15+15)
 
 
 types[corbomiteWidgets.TraceInWidget] = CorbomiteGuiWidgetTraceIn

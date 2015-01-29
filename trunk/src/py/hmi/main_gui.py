@@ -28,11 +28,14 @@ class RootFrame(wx.Frame):
         self.Show()
         if len(sys.argv) > 1:
             for p in sys.argv[1:]:
-                (t, d, b) = p.split(':')
-                if t.upper() == 'SERIAL':
-                    self.openPort(serial.Serial(d, int(b), timeout=1))
+                t = p.split(':')
+                if t[0].upper() == 'SERIAL':
+                    baud = 9600
+                    if len(t) > 2:
+                        baud = int(t[2])
+                    self.openPort(serial.Serial(t[1], baud, timeout=1))
                 else:
-                    self.openPort(TcpClient(d))
+                    self.openPort(TcpClient(t[1]))
 
     def onOpenDevice(self, event):
         self.openDlg = openDeviceDialog.OpenDeviceDialog()
