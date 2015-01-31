@@ -30,10 +30,10 @@ class CorbomiteClient(common.corbomiteIo.CorbomiteIo):
             self.busy = True
         elif frame == 'idle':
             print "Idle"
-            self.init = False
+            # self.init = False
             self.busy = False
-        elif self.init:
-            w = corbomiteWidgets.CorbomiteWidget.factory(frame, self)
+        elif frame.split()[0] == "info":
+            w = corbomiteWidgets.CorbomiteWidget.factory(frame[4:], self)
             for i in self.initCallbacks:
                 i(w)
         else:

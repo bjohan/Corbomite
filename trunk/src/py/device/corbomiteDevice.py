@@ -191,5 +191,5 @@ class CorbomiteDevice(common.corbomiteIo.CorbomiteIo):
 
     def onInfo(self, frame, interface):
         for w in self.widgets[1:]:
-            self.write(w.onInfo())
+            self.write("info "+w.onInfo())
         self.write("idle")
