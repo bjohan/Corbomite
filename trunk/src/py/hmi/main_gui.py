@@ -19,7 +19,6 @@ class RootFrame(wx.Frame):
         menuBar = wx.MenuBar()
         menu = wx.Menu()
         menuBar.Append(menu, "&File")
-
         self.openDeviceId = wx.NewId()
         menu.Append(self.openDeviceId, "Open Corbomite Device")
         wx.EVT_MENU(self, self.openDeviceId, self.onOpenDevice)

@@ -64,7 +64,7 @@ class AnalogOutWidget(CorbomiteWidget):
                                                 toks[5], toks[6]))
 
     def writeValue(self, value):
-        self.parentDevice.write(self.name+' '+str(value))
+        self.parentDevice.write(self, self.name+' '+str(value))
 CorbomiteWidget.registerCorbomiteWidgetType('aout', AnalogOutWidget)
 
 
@@ -88,7 +88,7 @@ class DigitalOutWidget(CorbomiteWidget):
         valueToSend = ' 0'
         if value is True or value > 0:
             valueToSend = ' 1'
-        self.parentDevice.write(self.name+valueToSend)
+        self.parentDevice.write(self, self.name+valueToSend)
 
 CorbomiteWidget.registerCorbomiteWidgetType('dout', DigitalOutWidget)
 
@@ -143,7 +143,7 @@ class EventOutWidget(CorbomiteWidget):
         self.writeValue(None)
 
     def writeValue(self, value):
-        self.parentDevice.write(self.name)
+        self.parentDevice.write(self, self.name)
 
 CorbomiteWidget.registerCorbomiteWidgetType('eout', EventOutWidget)
 

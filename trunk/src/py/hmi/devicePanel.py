@@ -27,4 +27,8 @@ class DevicePanel(wx.Panel):
         wx.CallAfter(self.receiveInitEvent, widget)
 
     def receiveCallback(self, data):
+        # if data == "idle":
+        #    print "Idle"
+        # if data == "busy":
+        #    print "Busy"
         pass
