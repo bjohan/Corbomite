@@ -3,6 +3,7 @@ import wx
 import time
 import csv
 import common.corbomiteValue
+from collections import OrderedDict
 types = {}
 
 
@@ -254,6 +255,7 @@ class CorbomiteGuiWidgetAnalogIn(CorbomiteGuiWidget):
 types[corbomiteWidgets.AnalogInWidget] = CorbomiteGuiWidgetAnalogIn
 
 
+# This class needs some structure!
 class CorbomiteGuiWidgetTraceIn(CorbomiteGuiWidget):
     def __init__(self, parent, widget):
         CorbomiteGuiWidget.__init__(self, parent, widget)
@@ -269,9 +271,10 @@ class CorbomiteGuiWidgetTraceIn(CorbomiteGuiWidget):
         self.Bind(wx.EVT_PAINT, self.onPaint)
         self.Bind(wx.EVT_SIZE, self.sizeEvent)
         parent.Bind(wx.EVT_MOUSEWHEEL, self.onMouseWheel)
-
-        self.plotTraces = []
-        self.traceMemory = {}
+        self.popupPoint = (0, 0)
+        self.vMarkers = OrderedDict()
+        self.hMarkers = OrderedDict()
+        self.traceMemory = OrderedDict()
         self.yWeight = 10
         self.lastCoords = None
         self.pixelsPerGraticuleLine = 75
@@ -285,6 +288,8 @@ class CorbomiteGuiWidgetTraceIn(CorbomiteGuiWidget):
         self.popupmenu = wx.Menu()
         self.Bind(wx.EVT_MENU, self.onSaveTrace, self.popupmenu.Append(-1,
                   "Save trace"))
+        self.Bind(wx.EVT_MENU, self.onNewVerticalMarker, self.popupmenu.Append(
+                  -1, "New vertical marker"))
         self.Bind(wx.EVT_MENU, self.onMemorizeTrace, self.popupmenu.Append(-1,
                   "Memorize trace"))
         self.Bind(wx.EVT_MENU, self.onLoadTrace,
@@ -294,6 +299,12 @@ class CorbomiteGuiWidgetTraceIn(CorbomiteGuiWidget):
                                      "Memorized traces")
         self.Bind(wx.EVT_MENU, self.onSubtract, self.popupmenu.Append(-1,
                   "Subtract mem"))
+
+    def onNewVerticalMarker(self, evt):
+        dlg = wx.TextEntryDialog(self, "Enter name of marker", "Enter name")
+        dlg.ShowModal()
+        self.vMarkers[dlg.GetValue()] = self.popupPoint[0]
+        print self.vMarkers
 
     def onSubtract(self, evt):
         dlg = wx.SingleChoiceDialog(self, "Choose a trace to subtract from",
@@ -403,6 +414,7 @@ class CorbomiteGuiWidgetTraceIn(CorbomiteGuiWidget):
         self.rightPressed = False
         if not self.scrolled:
             pos = evt.GetPosition()
+            self.popupPoint = pos
             self.PopupMenu(self.popupmenu, pos)
         self.scrolled = False
 
@@ -486,20 +498,37 @@ class CorbomiteGuiWidgetTraceIn(CorbomiteGuiWidget):
             currentGraticule += graticuleResolution
             if currentGraticule > axisMax:
                 break
-        return gls
+        return (gls, graticuleResolution)
 
     def drawScale(self, dc):
         (winx, winy) = self.GetSize()
-        glsY = self.computeScale(self.yMax, self.yMin, winy)
-        glsX = self.computeScale(self.xMax, self.xMin, winx)
-        for ya in glsY:
+        (glsY, ry) = self.computeScale(self.yMax, self.yMin, winy)
+        (glsX, rx) = self.computeScale(self.xMax, self.xMin, winx)
+        dc.SetPen(wx.Pen("GREY", 3))
+        first = True
+        for ya in glsY[1:]:
             y = self.yAxisToPixels(ya)
             dc.DrawLine(0, y, winx, y)
-            dc.DrawText(self.widget.value[1].getPrecisionString(ya, 2), 0, y)
+            if first:
+                yString = self.widget.value[1].getPrecisionString(ya, 2) + "\n"\
+                    + self.widget.value[1].getPrecisionString(ry, 2) + "/div"
+                dc.DrawText(yString,
+                            0, y-36)
+                dc.SetPen(wx.Pen("GREY", 1))
+                first = False
+
+        dc.SetPen(wx.Pen("GREY", 3))
+        first = True
         for xa in glsX[1:]:
             x = self.xAxisToPixels(xa)
             dc.DrawLine(x, 0, x, winy)
-            dc.DrawText(self.widget.value[0].getPrecisionString(xa, 2), x, 0)
+            if first:
+                xString = self.widget.value[0].getPrecisionString(xa, 2) + "\n"\
+                    + self.widget.value[0].getPrecisionString(rx, 2) + "/div"
+                dc.DrawText(xString,
+                            x, 0)
+                dc.SetPen(wx.Pen("GREY", 1))
+                first = False
 
     def drawPlot(self, dc, name, points):
         (winx, winy) = self.GetSize()
@@ -519,7 +548,7 @@ class CorbomiteGuiWidgetTraceIn(CorbomiteGuiWidget):
             dc.DrawLine(x1, y1, x2, y2)
 
     def render(self, dc):
-        c = wx.Colour(255, 255, 255)
+        c = wx.Colour(200, 200, 200)
         brush = wx.Brush(c, wx.SOLID)
         dc.SetBackground(brush)
         dc.Clear()
@@ -552,6 +581,11 @@ class CorbomiteGuiWidgetTraceIn(CorbomiteGuiWidget):
             dc.SetTextForeground(c)
             self.drawPlot(dc, "subtract", points)
             dc.DrawText("subtract", w-100, i*15+15)
+
+        c = wx.NamedColour("GREEN")
+        dc.SetPen(wx.Pen(c))
+        for m in self.vMarkers:
+            dc.DrawLine(self.vMarkers[m], 0, self.vMarkers[m], h)
 
 
 types[corbomiteWidgets.TraceInWidget] = CorbomiteGuiWidgetTraceIn
