@@ -307,7 +307,7 @@ class CorbomiteGuiWidgetTraceIn(CorbomiteGuiWidget):
         parent.Bind(wx.EVT_MOUSEWHEEL, self.onMouseWheel)
         self.popupPoint = (0, 0)
         # self.vMarkers = OrderedDict()
-        self.Markers = []
+        self.cursors = []
         self.traceMemory = OrderedDict()
         self.yWeight = 10
         self.lastCoords = None
@@ -432,11 +432,11 @@ class CorbomiteGuiWidgetTraceIn(CorbomiteGuiWidget):
 
     def moveCursor(self, evt):
         moved = False
-        for cursor in self.Markers:
+        for cursor in self.cursors:
             moved |= cursor.move(self.dragX(evt), self.dragY(evt))
 
     def cursorDragging(self):
-        for cursor in self.Markers:
+        for cursor in self.cursors:
             if cursor.dragging:
                 return True
         return False
@@ -446,18 +446,18 @@ class CorbomiteGuiWidgetTraceIn(CorbomiteGuiWidget):
             wx.SetCursor(wx.StockCursor(wx.CURSOR_SIZEWE))
             if self.leftPressed and abs(self.dragX(evt)) > 0:
                 if not self.cursorDragging():
-                    self.Markers.append(Cursor(True, self.x0, True))
+                    self.cursors.append(Cursor(True, self.x0, True))
         elif abs(evt.GetY() - int(self.y0)) < 3:
             wx.SetCursor(wx.StockCursor(wx.CURSOR_SIZENS))
             if self.leftPressed and abs(self.dragY(evt)) > 0:
                 if not self.cursorDragging():
-                    self.Markers.append(Cursor(False, self.y0, True))
+                    self.cursors.append(Cursor(False, self.y0, True))
         else:
             wx.SetCursor(wx.StockCursor(wx.CURSOR_ARROW))
 
         self.moveCursor(evt)
         if not self.leftPressed:
-            for c in self.Markers:
+            for c in self.cursors:
                 c.dragging = False
 
         if not self.cursorDragging():
@@ -662,12 +662,9 @@ class CorbomiteGuiWidgetTraceIn(CorbomiteGuiWidget):
 
         c = wx.NamedColour("GREEN")
         dc.SetPen(wx.Pen(c))
-        # for m in self.vMarkers:
-        #    dc.DrawLine(self.vMarkers[m], 0, self.vMarkers[m], h)
 
-        for m in self.Markers:
+        for m in self.cursors:
             m.render(dc)
-            # dc.DrawLine(0, m.position, w, m.position)
 
 
 types[corbomiteWidgets.TraceInWidget] = CorbomiteGuiWidgetTraceIn
