@@ -260,9 +260,20 @@ class Trace:
         pass
 
 
-class Scale:
-    def __init__(self):
-        pass
+class TraceScale:
+    def __init__(self, xValue, yValue):
+        self.xValue = xValue
+        self.yValue = yValue
+
+    def toDcCoordinates(self, dc, x, y):
+        (winx, winy) = dc.GetSize()
+        pixelsPerUnit = winx/(self.xMax-self.xMin)
+        xPixels = (x - self.xMin)*pixelsPerUnit
+        x = max(min(xPixels, winx+1), -1)
+
+        pixelsPerUnit = winy/(self.yMax - self.yMin)
+        yPixels = winy-(y-self.yMin)*pixelsPerUnit
+        y = max(min(yPixels, winy+1), -1)
 
 
 class Cursor:
