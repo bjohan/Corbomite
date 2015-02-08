@@ -639,19 +639,19 @@ class CorbomiteGuiWidgetTraceIn(CorbomiteGuiWidget):
 
     def drawPlot(self, dc, name, points):
         (winx, winy) = self.GetSize()
-        if self.xMax != self.xMin:
-            xpixelsPerUnit = winx/(self.xMax-self.xMin)
-            ypixelsPerUnit = winy/(self.yMax-self.yMin)
+        if self.scale.xMax != self.scale.xMin:
+            xpixelsPerUnit = winx/(self.scale.xMax-self.scale.xMin)
+            ypixelsPerUnit = winy/(self.scale.yMax-self.scale.yMin)
         else:
             xpixelsPerUnit = winx
             ypixelsPerUnit = winy
         for i in range(len(points)-1):
             p1 = points[i]
             p2 = points[i+1]
-            x1 = min((p1[0]-self.xMin)*xpixelsPerUnit, winx+1)
-            y1 = min(winy-(p1[1]-self.yMin)*ypixelsPerUnit, winy+1)
-            x2 = min((p2[0]-self.xMin)*xpixelsPerUnit, winx+1)
-            y2 = min(winy-(p2[1]-self.yMin)*ypixelsPerUnit, winy+1)
+            x1 = min((p1[0]-self.scale.xMin)*xpixelsPerUnit, winx+1)
+            y1 = min(winy-(p1[1]-self.scale.yMin)*ypixelsPerUnit, winy+1)
+            x2 = min((p2[0]-self.scale.xMin)*xpixelsPerUnit, winx+1)
+            y2 = min(winy-(p2[1]-self.scale.yMin)*ypixelsPerUnit, winy+1)
             dc.DrawLine(x1, y1, x2, y2)
 
     def render(self, dc):
