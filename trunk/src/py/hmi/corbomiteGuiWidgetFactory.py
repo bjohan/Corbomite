@@ -257,13 +257,40 @@ types[corbomiteWidgets.AnalogInWidget] = CorbomiteGuiWidgetAnalogIn
 
 class Trace:
     def __init__(self):
+       self.data = []
+       pass
+
+    def render(self, scale, dc):
         pass
+
+    def append(self, xy):
+        pass
+
+    def set(self, xyData):
+        self.data = xyData
 
 
 class TraceScale:
     def __init__(self, xValue, yValue):
         self.xValue = xValue
         self.yValue = yValue
+        self.xMin = 0.0
+        self.xMax = 1.0
+        self.yMin = 0.0
+        self.yMax = 1.0
+        self.pixelsPerGraticuleLine = 50
+
+    def setXLimits(self, xMin, xMax):
+        self.xMax = xMax
+        self.xMin = xMin
+
+    def setYLimits(self, yMin, yMax):
+        self.yMax = yMax
+        self.yMin = yMin
+
+    def setLimits(self, xMin, xMax, yMin, yMax):
+        self.setXLimits(xMin, xMax)
+        self.setYLimits(yMin, yMax)
 
     def toDcCoordinates(self, dc, x, y):
         (winx, winy) = dc.GetSize()
@@ -274,7 +301,95 @@ class TraceScale:
         pixelsPerUnit = winy/(self.yMax - self.yMin)
         yPixels = winy-(y-self.yMin)*pixelsPerUnit
         y = max(min(yPixels, winy+1), -1)
+        return (x, y)
 
+    def findClosest125(self, value):
+        tens = -20
+        while True:
+            for m in [1, 2, 5]:
+                f = (10**tens)*m
+                if f > value:
+                    return f
+            tens += 1
+
+    def computeScale(self, axisMax, axisMin, axisLengthInPixels):
+        axisMax = float(axisMax)
+        axisMin = float(axisMin)
+        axisRange = axisMax - axisMin
+        if axisRange < 1e-18:
+                axisRange = 1
+        graticuleResolution = self.getGraticuleResolution(axisRange,
+                                                          axisLengthInPixels)
+        startGraticule = axisMin - axisMin % graticuleResolution
+        currentGraticule = startGraticule
+        gls = []  # Graticule lines as pixel coordinates
+        while True:
+            gls.append(currentGraticule)
+            currentGraticule += graticuleResolution
+            if currentGraticule > axisMax:
+                break
+        return (gls, graticuleResolution)
+
+    def getGraticuleResolution(self, axisRange, axisSize):
+        maxGraticuleLines = axisSize/self.pixelsPerGraticuleLine
+        firstGuess = axisRange/maxGraticuleLines
+        return self.findClosest125(firstGuess)
+
+    def render(self, dc):
+        (winx, winy) = dc.GetSize()
+        (glsY, ry) = self.computeScale(self.yMax, self.yMin, winy)
+        (glsX, rx) = self.computeScale(self.xMax, self.xMin, winx)
+        dc.SetPen(wx.Pen("GREY", 3))
+        first = True
+        for ya in glsY[1:]:
+            (foo, y) = self.toDcCoordinates(dc, 0, ya)
+            dc.DrawLine(0, y, winx, y)
+            if first:
+                self.y0 = y
+                yString = self.yValue.getPrecisionString(ya, 2) + "\n"\
+                    + self.yValue.getPrecisionString(ry, 2) + "/div"
+                dc.DrawText(yString,
+                            0, y-36)
+                dc.SetPen(wx.Pen("GREY", 1))
+                first = False
+
+        dc.SetPen(wx.Pen("GREY", 3))
+        first = True
+        for xa in glsX[1:]:
+            (x, foo) = self.toDcCoordinates(dc, xa, 0)
+            dc.DrawLine(x, 0, x, winy)
+            if first:
+                self.x0 = x
+                xString = self.xValue.getPrecisionString(xa, 2) + "\n"\
+                    + self.xValue.getPrecisionString(rx, 2) + "/div"
+                dc.DrawText(xString,
+                            x, 0)
+                dc.SetPen(wx.Pen("GREY", 1))
+                first = False
+
+    def drag(self, dc, dx, dy):
+        uppx = -(self.xMax-self.xMin)/float(dc.GetSize()[0])
+        uppy = (self.yMax-self.yMin)/float(dc.GetSize()[1])
+        dx = dx*uppx
+        dy = dy*uppy
+        self.xMax += dx
+        self.yMax += dy
+        self.xMin += dx
+        self.yMin += dy
+
+    def zoomY(self, factor):
+        center = 0.5*(self.yMin+self.yMax)
+        half = self.yMax-center
+        half = half/factor
+        self.yMin = center-half
+        self.yMax = center+half
+
+    def zoomX(self, factor):
+        center = 0.5*(self.xMin+self.xMax)
+        half = self.xMax-center
+        half = half/factor
+        self.xMin = center-half
+        self.xMax = center+half
 
 class Cursor:
     def __init__(self, vertical, position, dragging=False):
@@ -319,10 +434,11 @@ class CorbomiteGuiWidgetTraceIn(CorbomiteGuiWidget):
         self.popupPoint = (0, 0)
         # self.vMarkers = OrderedDict()
         self.cursors = []
+        self.scale = TraceScale(self.widget.value[0], self.widget.value[1])
         self.traceMemory = OrderedDict()
         self.yWeight = 10
         self.lastCoords = None
-        self.pixelsPerGraticuleLine = 50
+        # self.pixelsPerGraticuleLine = 50
         self.autoScale()
         self.timer = wx.Timer(self)
         self.Bind(wx.EVT_TIMER, self.onTimer, self.timer)
@@ -419,13 +535,18 @@ class CorbomiteGuiWidgetTraceIn(CorbomiteGuiWidget):
 
     def autoScale(self):
         if self.widget.name in self.traceMemory:
-            self.xMin = min(self.traceMemory[self.widget.name][0])
-            self.xMax = max(self.traceMemory[self.widget.name][0])
-            self.yMin = min(self.traceMemory[self.widget.name][1])
-            self.yMax = max(self.traceMemory[self.widget.name][1])
+            # self.xMin = min(self.traceMemory[self.widget.name][0])
+            # self.xMax = max(self.traceMemory[self.widget.name][0])
+            # self.yMin = min(self.traceMemory[self.widget.name][1])
+            # self.yMax = max(self.traceMemory[self.widget.name][1])
+            self.scale.setLimits(min(self.traceMemory[self.widget.name][0]),
+                                 max(self.traceMemory[self.widget.name][0]),
+                                 min(self.traceMemory[self.widget.name][1]),
+                                 max(self.traceMemory[self.widget.name][1]))
         else:
-            self.xMin = self.yMin = 0
-            self.xMax = self.yMax = 1
+            self.scale.setLimits(0.0, 1.0, 0.0, 1.0)
+            # self.xMin = self.yMin = 0
+            # self.xMax = self.yMax = 1
 
     def onLeftDown(self, evt):
         self.leftPressed = True
@@ -475,14 +596,15 @@ class CorbomiteGuiWidgetTraceIn(CorbomiteGuiWidget):
             if self.leftPressed:
                 dxp = evt.GetX()-self.lastCoords[0]
                 dyp = evt.GetY()-self.lastCoords[1]
-                uppx = -(self.xMax-self.xMin)/float(self.GetSize()[0])
-                uppy = (self.yMax-self.yMin)/float(self.GetSize()[1])
-                dx = dxp*uppx
-                dy = dyp*uppy
-                self.xMax += dx
-                self.yMax += dy
-                self.xMin += dx
-                self.yMin += dy
+                self.scale.drag(self, dxp, dyp)
+                # uppx = -(self.xMax-self.xMin)/float(self.GetSize()[0])
+                # uppy = (self.yMax-self.yMin)/float(self.GetSize()[1])
+                # dx = dxp*uppx
+                # dy = dyp*uppy
+                # self.xMax += dx
+                # self.yMax += dy
+                # self.xMin += dx
+                # self.yMin += dy
         self.rePaint()
         self.lastCoords = (evt.GetX(), evt.GetY())
 
@@ -505,32 +627,32 @@ class CorbomiteGuiWidgetTraceIn(CorbomiteGuiWidget):
             self.PopupMenu(self.popupmenu, pos)
         self.scrolled = False
 
-    def zoomYScale(self, factor):
-        center = 0.5*(self.yMin+self.yMax)
-        half = self.yMax-center
-        half = half/factor
-        self.yMin = center-half
-        self.yMax = center+half
+    # def zoomYScale(self, factor):
+    #    center = 0.5*(self.yMin+self.yMax)
+    #    half = self.yMax-center
+    #    half = half/factor
+    #    self.yMin = center-half
+    #    self.yMax = center+half
 
-    def zoomXScale(self, factor):
-        center = 0.5*(self.xMin+self.xMax)
-        half = self.xMax-center
-        half = half/factor
-        self.xMin = center-half
-        self.xMax = center+half
+    # def zoomXScale(self, factor):
+    #    center = 0.5*(self.xMin+self.xMax)
+    #    half = self.xMax-center
+    #    half = half/factor
+    #    self.xMin = center-half
+    #    self.xMax = center+half
 
     def onMouseWheel(self, evt):
         self.scrolled = True
         if evt.GetWheelRotation() < 0:
             if self.rightPressed:
-                self.zoomXScale(1.1)
+                self.scale.zoomX(1.1)
             else:
-                self.zoomYScale(1.1)
+                self.scale.zoomY(1.1)
         else:
             if self.rightPressed:
-                self.zoomXScale(1/1.1)
+                self.scale.zoomX(1/1.1)
             else:
-                self.zoomYScale(1/1.1)
+                self.scale.zoomY(1/1.1)
         self.rePaint()
 
     def sizeEvent(self, evt):
@@ -543,19 +665,19 @@ class CorbomiteGuiWidgetTraceIn(CorbomiteGuiWidget):
         dc = wx.PaintDC(self)
         self.render(wx.BufferedDC(dc))
 
-    def findClosest125(self, value):
-        tens = -20
-        while True:
-            for m in [1, 2, 5]:
-                f = (10**tens)*m
-                if f > value:
-                    return f
-            tens += 1
+    #def findClosest125(self, value):
+    #    tens = -20
+    #    while True:
+    #        for m in [1, 2, 5]:
+    #            f = (10**tens)*m
+    #            if f > value:
+    #                return f
+    #        tens += 1
 
-    def getGraticuleResolution(self, axisRange, axisSize):
-        maxGraticuleLines = axisSize/self.pixelsPerGraticuleLine
-        firstGuess = axisRange/maxGraticuleLines
-        return self.findClosest125(firstGuess)
+    #def getGraticuleResolution(self, axisRange, axisSize):
+    #    maxGraticuleLines = axisSize/self.pixelsPerGraticuleLine
+    #    firstGuess = axisRange/maxGraticuleLines
+    #    return self.findClosest125(firstGuess)
 
     def xAxisToPixels(self, x):
         (winx, winy) = self.GetSize()
@@ -569,55 +691,55 @@ class CorbomiteGuiWidgetTraceIn(CorbomiteGuiWidget):
         yPixels = winy-(y-self.yMin)*pixelsPerUnit
         return max(min(yPixels, winy+1), -1)
 
-    def computeScale(self, axisMax, axisMin, axisLengthInPixels):
-        axisMax = float(axisMax)
-        axisMin = float(axisMin)
-        axisRange = axisMax - axisMin
-        if axisRange < 1e-18:
-                axisRange = 1
-        graticuleResolution = self.getGraticuleResolution(axisRange,
-                                                          axisLengthInPixels)
-        startGraticule = axisMin - axisMin % graticuleResolution
-        currentGraticule = startGraticule
-        gls = []  # Graticule lines as pixel coordinates
-        while True:
-            gls.append(currentGraticule)
-            currentGraticule += graticuleResolution
-            if currentGraticule > axisMax:
-                break
-        return (gls, graticuleResolution)
+    #def computeScale(self, axisMax, axisMin, axisLengthInPixels):
+    #    axisMax = float(axisMax)
+    #    axisMin = float(axisMin)
+    #    axisRange = axisMax - axisMin
+    #    if axisRange < 1e-18:
+    #            axisRange = 1
+    #    graticuleResolution = self.getGraticuleResolution(axisRange,
+    #                                                      axisLengthInPixels)
+    #    startGraticule = axisMin - axisMin % graticuleResolution
+    #    currentGraticule = startGraticule
+    #    gls = []  # Graticule lines as pixel coordinates
+    #    while True:
+    #        gls.append(currentGraticule)
+    #        currentGraticule += graticuleResolution
+    #        if currentGraticule > axisMax:
+    #            break
+    #    return (gls, graticuleResolution)
 
-    def drawScale(self, dc):
-        (winx, winy) = self.GetSize()
-        (glsY, ry) = self.computeScale(self.yMax, self.yMin, winy)
-        (glsX, rx) = self.computeScale(self.xMax, self.xMin, winx)
-        dc.SetPen(wx.Pen("GREY", 3))
-        first = True
-        for ya in glsY[1:]:
-            y = self.yAxisToPixels(ya)
-            dc.DrawLine(0, y, winx, y)
-            if first:
-                self.y0 = y
-                yString = self.widget.value[1].getPrecisionString(ya, 2) + "\n"\
-                    + self.widget.value[1].getPrecisionString(ry, 2) + "/div"
-                dc.DrawText(yString,
-                            0, y-36)
-                dc.SetPen(wx.Pen("GREY", 1))
-                first = False
-
-        dc.SetPen(wx.Pen("GREY", 3))
-        first = True
-        for xa in glsX[1:]:
-            x = self.xAxisToPixels(xa)
-            dc.DrawLine(x, 0, x, winy)
-            if first:
-                self.x0 = x
-                xString = self.widget.value[0].getPrecisionString(xa, 2) + "\n"\
-                    + self.widget.value[0].getPrecisionString(rx, 2) + "/div"
-                dc.DrawText(xString,
-                            x, 0)
-                dc.SetPen(wx.Pen("GREY", 1))
-                first = False
+    # def drawScale(self, dc):
+    #    (winx, winy) = self.GetSize()
+    #    (glsY, ry) = self.computeScale(self.yMax, self.yMin, winy)
+    #    (glsX, rx) = self.computeScale(self.xMax, self.xMin, winx)
+    #    dc.SetPen(wx.Pen("GREY", 3))
+    #    first = True
+    #    for ya in glsY[1:]:
+    #        y = self.yAxisToPixels(ya)
+    #        dc.DrawLine(0, y, winx, y)
+    #        if first:
+    #            self.y0 = y
+    #            yString = self.widget.value[1].getPrecisionString(ya, 2) + "\n"\
+    #                + self.widget.value[1].getPrecisionString(ry, 2) + "/div"
+    #            dc.DrawText(yString,
+    #                        0, y-36)
+    #            dc.SetPen(wx.Pen("GREY", 1))
+    #            first = False
+    #
+    #    dc.SetPen(wx.Pen("GREY", 3))
+    #    first = True
+    #    for xa in glsX[1:]:
+    #        x = self.xAxisToPixels(xa)
+    #        dc.DrawLine(x, 0, x, winy)
+    #        if first:
+    #            self.x0 = x
+    #            xString = self.widget.value[0].getPrecisionString(xa, 2) + "\n"\
+    #                + self.widget.value[0].getPrecisionString(rx, 2) + "/div"
+    #            dc.DrawText(xString,
+    #                        x, 0)
+    #            dc.SetPen(wx.Pen("GREY", 1))
+    #            first = False
 
     def drawPlot(self, dc, name, points):
         (winx, winy) = self.GetSize()
@@ -641,7 +763,8 @@ class CorbomiteGuiWidgetTraceIn(CorbomiteGuiWidget):
         brush = wx.Brush(c, wx.SOLID)
         dc.SetBackground(brush)
         dc.Clear()
-        self.drawScale(dc)
+        # self.drawScale(dc)
+        self.scale.render(dc)
         clist = ['BLACK', 'BROWN', 'RED', 'ORANGE', 'YELLOW', 'GREEN', 'BLUE',
                  'VIOLET', 'GREY', 'WHITE']
         i = 0
