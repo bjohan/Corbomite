@@ -13,15 +13,15 @@ def resample(t1, x):
        this function returns a trace (Tuple4 with x and y) with values at
        the points in t1[0] and x2"""
     x2 = x[:]
-    rStart = max(t1[0][0], x2[0])
-    rStop = min(t1[0][-1], x2[-1])
+    rStart = max(t1.x[0], x2[0])
+    rStop = min(t1.x[-1], x2[-1])
     i1 = 0
     i2 = 0
-    x1 = t1[0]
+    x1 = t1.x
     xp = rStart
     cpy = False
     resampled = ([], [])
-    xp = min(t1[0][0], x2[0])
+    xp = min(t1.x[0], x2[0])
     x2.insert(0, x2[0]-1)   # Ugly fix to make sure that first value in x2 is
     # not skipped
 
@@ -29,11 +29,11 @@ def resample(t1, x):
         if (xp >= rStart) and (xp <= rStop):
             if cpy:
                 resampled[0].append(xp)
-                resampled[1].append(t1[1][i1])
+                resampled[1].append(t1.y[i1])
             else:
                 sf = (xp - x1[i1])/(x1[i1+1] - x1[i1])
-                yd = (t1[1][i1+1]-t1[1][i1])*sf
-                ynew = t1[1][i1]+yd
+                yd = (t1.y[i1+1]-t1.y[i1])*sf
+                ynew = t1.y[i1]+yd
                 resampled[0].append(xp)
                 resampled[1].append(ynew)
 
@@ -256,18 +256,42 @@ types[corbomiteWidgets.AnalogInWidget] = CorbomiteGuiWidgetAnalogIn
 
 
 class Trace:
-    def __init__(self):
-       self.data = []
-       pass
-
-    def render(self, scale, dc):
+    def __init__(self, x=[], y=[]):
+        self.x = x
+        self.y = y
         pass
 
-    def append(self, xy):
-        pass
+    def append(self, x, y):
+        self.x.append(x)
+        self.y.append(y)
 
-    def set(self, xyData):
-        self.data = xyData
+    def set(self, x, y):
+        self.x = x
+        self.y = y
+
+    def render(self, dc, scale, name):
+        (winx, winy) = dc.GetSize()
+        if scale.xMax != scale.xMin:
+            xpixelsPerUnit = winx/(scale.xMax-scale.xMin)
+            ypixelsPerUnit = winy/(scale.yMax-scale.yMin)
+        else:
+            xpixelsPerUnit = winx
+            ypixelsPerUnit = winy
+        points = zip(self.x, self.y)
+        for i in range(len(points)-1):
+            p1 = points[i]
+            p2 = points[i+1]
+            x1 = min((p1[0]-scale.xMin)*xpixelsPerUnit, winx+1)
+            y1 = min(winy-(p1[1]-scale.yMin)*ypixelsPerUnit, winy+1)
+            x2 = min((p2[0]-scale.xMin)*xpixelsPerUnit, winx+1)
+            y2 = min(winy-(p2[1]-scale.yMin)*ypixelsPerUnit, winy+1)
+            dc.DrawLine(x1, y1, x2, y2)
+
+    def getXRange(self):
+        return (min(self.x), max(self.x))
+
+    def getYRange(self):
+        return (min(self.y), max(self.y))
 
 
 class TraceScale:
@@ -279,6 +303,8 @@ class TraceScale:
         self.yMin = 0.0
         self.yMax = 1.0
         self.pixelsPerGraticuleLine = 50
+        self.x0 = 0
+        self.y0 = 0
 
     def setXLimits(self, xMin, xMax):
         self.xMax = xMax
@@ -288,9 +314,15 @@ class TraceScale:
         self.yMax = yMax
         self.yMin = yMin
 
-    def setLimits(self, xMin, xMax, yMin, yMax):
-        self.setXLimits(xMin, xMax)
-        self.setYLimits(yMin, yMax)
+    # def setLimits(self, xMin, xMax, yMin, yMax):
+    #    self.setXLimits(xMin, xMax)
+    #    self.setYLimits(yMin, yMax)
+
+    def setLimits(self, xRange, yRange):
+        self.xMin = xRange[0]
+        self.xMax = xRange[1]
+        self.yMin = yRange[0]
+        self.yMax = yRange[1]
 
     def toDcCoordinates(self, dc, x, y):
         (winx, winy) = dc.GetSize()
@@ -391,6 +423,7 @@ class TraceScale:
         self.xMin = center-half
         self.xMax = center+half
 
+
 class Cursor:
     def __init__(self, vertical, position, dragging=False):
         self.vertical = vertical
@@ -412,6 +445,19 @@ class Cursor:
             dc.DrawLine(self.position, 0, self.position, h)
         else:
             dc.DrawLine(0, self.position, w, self.position)
+
+
+class SerialColorGenerator:
+        clist = ['BLACK', 'BROWN', 'RED', 'ORANGE', 'YELLOW', 'GREEN', 'BLUE',
+                 'VIOLET', 'GREY', 'WHITE']
+        i = 0
+
+        def get():
+            c = SerialColorGenerator.clist[SerialColorGenerator.i]
+            SerialColorGenerator.i += 1
+            SerialColorGenerator.i %= len(SerialColorGenerator.clist)
+            color = wx.NamedColour(c)
+            return color
 
 
 # This class needs some structure! break out markers, scales and cursors into
@@ -438,7 +484,6 @@ class CorbomiteGuiWidgetTraceIn(CorbomiteGuiWidget):
         self.traceMemory = OrderedDict()
         self.yWeight = 10
         self.lastCoords = None
-        # self.pixelsPerGraticuleLine = 50
         self.autoScale()
         self.timer = wx.Timer(self)
         self.Bind(wx.EVT_TIMER, self.onTimer, self.timer)
@@ -460,8 +505,6 @@ class CorbomiteGuiWidgetTraceIn(CorbomiteGuiWidget):
                                      "Memorized traces")
         self.Bind(wx.EVT_MENU, self.onSubtract, self.popupmenu.Append(-1,
                   "Subtract mem"))
-        self.y0 = 0
-        self.x0 = 0
 
     def onNewVerticalMarker(self, evt):
         dlg = wx.TextEntryDialog(self, "Enter name of marker", "Enter name")
@@ -498,14 +541,14 @@ class CorbomiteGuiWidgetTraceIn(CorbomiteGuiWidget):
             dlg = wx.TextEntryDialog(self, "Enter name of trace", "Enter name",
                                      path.split('.')[0].split('/')[-1])
             dlg.ShowModal()
-            self.storeTraceInMem((x, y), dlg.GetValue())
+            self.storeTraceInMem(Trace(x, y), dlg.GetValue())
 
     def onMemorizeTrace(self, evt):
         dlg = wx.TextEntryDialog(self, "Enter name of trace", "Enter name")
         dlg.ShowModal()
-        x = self.traceMemory[self.widget.name][0]
-        y = self.traceMemory[self.widget.name][1]
-        self.storeTraceInMem((x, y), dlg.GetValue())
+        x = self.traceMemory[self.widget.name].x
+        y = self.traceMemory[self.widget.name].y
+        self.storeTraceInMem(Trace(x, y), dlg.GetValue())
 
     def onSaveTrace(self, event):
         fd = wx.FileDialog(self, 'Save trace', "", "",
@@ -514,8 +557,8 @@ class CorbomiteGuiWidgetTraceIn(CorbomiteGuiWidget):
         path = fd.GetPath()
         outFile = open(path, 'wb')
         wr = csv.writer(outFile)
-        wr.writerow(self.traceMemory[self.widget.name][0])
-        wr.writerow(self.traceMemory[self.widget.name][1])
+        wr.writerow(self.traceMemory[self.widget.name].x)
+        wr.writerow(self.traceMemory[self.widget.name].y)
 
     def onTimer(self, evt):
         if time.time() > self.time:
@@ -526,21 +569,22 @@ class CorbomiteGuiWidgetTraceIn(CorbomiteGuiWidget):
         widget = evt.attr1
         if len(widget.trace) == 0:
             self.rePaint()
-        self.traceMemory[widget.name] = [[], []]
+        if widget.name not in self.traceMemory:
+            self.traceMemory[widget.name] = Trace()
+        self.traceMemory[widget.name].set([], [])
         for p in widget.trace:
             trace = self.traceMemory[widget.name]
-            trace[0].append(self.widget.value[0].toUnit(p[0]))
-            trace[1].append(self.widget.value[1].toUnit(p[1]))
+            trace.append(self.widget.value[0].toUnit(p[0]),
+                         self.widget.value[1].toUnit(p[1]))
         self.time = time.time()
 
     def autoScale(self):
         if self.widget.name in self.traceMemory:
-            self.scale.setLimits(min(self.traceMemory[self.widget.name][0]),
-                                 max(self.traceMemory[self.widget.name][0]),
-                                 min(self.traceMemory[self.widget.name][1]),
-                                 max(self.traceMemory[self.widget.name][1]))
+            name = self.widget.name
+            self.scale.setLimits(self.traceMemory[name].getXRange(),
+                                 self.traceMemory[name].getYRange())
         else:
-            self.scale.setLimits(0.0, 1.0, 0.0, 1.0)
+            self.scale.setLimits((0.0, 1.0), (0.0, 1.0))
 
     def onLeftDown(self, evt):
         self.leftPressed = True
@@ -568,16 +612,16 @@ class CorbomiteGuiWidgetTraceIn(CorbomiteGuiWidget):
         return False
 
     def onMotion(self, evt):
-        if abs(evt.GetX() - int(self.x0)) < 3:
+        if abs(evt.GetX() - int(self.scale.x0)) < 3:
             wx.SetCursor(wx.StockCursor(wx.CURSOR_SIZEWE))
             if self.leftPressed and abs(self.dragX(evt)) > 0:
                 if not self.cursorDragging():
-                    self.cursors.append(Cursor(True, self.x0, True))
-        elif abs(evt.GetY() - int(self.y0)) < 3:
+                    self.cursors.append(Cursor(True, self.scale.x0, True))
+        elif abs(evt.GetY() - int(self.scale.y0)) < 3:
             wx.SetCursor(wx.StockCursor(wx.CURSOR_SIZENS))
             if self.leftPressed and abs(self.dragY(evt)) > 0:
                 if not self.cursorDragging():
-                    self.cursors.append(Cursor(False, self.y0, True))
+                    self.cursors.append(Cursor(False, self.scale.y0, True))
         else:
             wx.SetCursor(wx.StockCursor(wx.CURSOR_ARROW))
 
@@ -637,24 +681,19 @@ class CorbomiteGuiWidgetTraceIn(CorbomiteGuiWidget):
         dc = wx.PaintDC(self)
         self.render(wx.BufferedDC(dc))
 
-    def drawPlot(self, dc, name, points):
-        (winx, winy) = self.GetSize()
-        if self.scale.xMax != self.scale.xMin:
-            xpixelsPerUnit = winx/(self.scale.xMax-self.scale.xMin)
-            ypixelsPerUnit = winy/(self.scale.yMax-self.scale.yMin)
-        else:
-            xpixelsPerUnit = winx
-            ypixelsPerUnit = winy
-        for i in range(len(points)-1):
-            p1 = points[i]
-            p2 = points[i+1]
-            x1 = min((p1[0]-self.scale.xMin)*xpixelsPerUnit, winx+1)
-            y1 = min(winy-(p1[1]-self.scale.yMin)*ypixelsPerUnit, winy+1)
-            x2 = min((p2[0]-self.scale.xMin)*xpixelsPerUnit, winx+1)
-            y2 = min(winy-(p2[1]-self.scale.yMin)*ypixelsPerUnit, winy+1)
-            dc.DrawLine(x1, y1, x2, y2)
+    def computeMath(self):
+        if len(self.subtract) == 2:
+            resampled1 = resample(self.traceMemory[self.subtract[0]],
+                                  self.traceMemory[self.subtract[1]].x)
+            resampled2 = resample(self.traceMemory[self.subtract[1]],
+                                  self.traceMemory[self.subtract[0]].x)
+
+            for j in range(len(resampled1[0])):
+                resampled1[1][j] -= resampled2[1][j]
+            self.traceMemory['subtract'] = Trace(resampled1[0], resampled1[1])
 
     def render(self, dc):
+        self.computeMath()
         c = wx.Colour(200, 200, 200)
         brush = wx.Brush(c, wx.SOLID)
         dc.SetBackground(brush)
@@ -667,34 +706,16 @@ class CorbomiteGuiWidgetTraceIn(CorbomiteGuiWidget):
         for name in self.traceMemory:
             c = wx.NamedColour(clist[i % len(clist)])
             dc.SetPen(wx.Pen(c))
-            points = zip(self.traceMemory[name][0], self.traceMemory[name][1])
-            self.drawPlot(dc, name, points)
+            self.traceMemory[name].render(dc, self.scale, name)
             dc.SetTextForeground(c)
             dc.DrawText(name, w-100, i*15+15)
             i += 1
-            # if i >= len(clist):
-            #    i = 0
-        if len(self.subtract) == 2:
-            resampled1 = resample(self.traceMemory[self.subtract[0]],
-                                  self.traceMemory[self.subtract[1]][0])
-            resampled2 = resample(self.traceMemory[self.subtract[1]],
-                                  self.traceMemory[self.subtract[0]][0])
-
-            for j in range(len(resampled1[0])):
-                resampled1[1][j] -= resampled2[1][j]
-            points = zip(resampled1[0], resampled1[1])
-            c = wx.NamedColour("MAGENTA")
-            dc.SetPen(wx.Pen(c))
-            dc.SetTextForeground(c)
-            self.drawPlot(dc, "subtract", points)
-            dc.DrawText("subtract", w-100, i*15+15)
 
         c = wx.NamedColour("GREEN")
         dc.SetPen(wx.Pen(c))
 
         for m in self.cursors:
             m.render(dc)
-
 
 types[corbomiteWidgets.TraceInWidget] = CorbomiteGuiWidgetTraceIn
 
