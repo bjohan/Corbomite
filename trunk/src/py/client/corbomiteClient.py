@@ -1,5 +1,6 @@
 import corbomiteWidgets
 import common.corbomiteIo
+import time
 from collections import OrderedDict
 
 
@@ -11,6 +12,9 @@ class CorbomiteClient(common.corbomiteIo.CorbomiteIo):
         self.writeQueue = {}
         self.widgets = OrderedDict()
         print "Sending info"
+        self.writer.write("info")
+	time.sleep(1)
+	time.sleep(1)
         self.writer.write("info")
         print "Waiting for data..."
         while self.busy:
