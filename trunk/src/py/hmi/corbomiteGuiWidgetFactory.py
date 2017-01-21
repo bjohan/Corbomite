@@ -249,7 +249,7 @@ class CorbomiteGuiWidgetAnalogIn(CorbomiteGuiWidget):
         self.sizer.Add(self.gauge, 3)
 
     def update(self, event):
-        self.gauge.SetValue(event.attr1.value.getRaw())
+        self.gauge.SetValue(event.attr1.value.getRaw()-self.widget.value.minRaw)
         self.label.SetLabel(self.widget.name + ' ' +
                             event.attr1.value.getValueString())
 types[corbomiteWidgets.AnalogInWidget] = CorbomiteGuiWidgetAnalogIn
