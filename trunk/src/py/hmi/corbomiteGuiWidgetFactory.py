@@ -233,7 +233,7 @@ class CorbomiteGuiWidgetAnalogOut(CorbomiteGuiWidget):
             common.corbomiteValue.prefixLetter(self.preferedPrefix))
 
     def onSlide(self, evt):
-        self.updateValue(self.widget.value.maxUnit *
+        self.updateValue(self.widget.value.minUnit+(self.widget.value.maxUnit-self.widget.value.minUnit) *
                          float(self.slider.GetValue()) /
                          float(self.slider.GetMax()))
 types[corbomiteWidgets.AnalogOutWidget] = CorbomiteGuiWidgetAnalogOut

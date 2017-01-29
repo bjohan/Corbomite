@@ -13,12 +13,17 @@ class CorbomiteClient(common.corbomiteIo.CorbomiteIo):
         self.widgets = OrderedDict()
         print "Sending info"
         self.writer.write("info")
-	time.sleep(1)
-	time.sleep(1)
+        t0= time.time();
+        time.sleep(1)
+        time.sleep(1)
         self.writer.write("info")
         print "Waiting for data..."
         while self.busy:
-            pass
+            if time.time()-t0 > 3:
+                print "No response after 3 seconds, resending info"
+                self.writer.write("info");
+                t0=time.time()
+        
         print "Done!!"
         print "registered widgets:",
         for key in self.widgets:
