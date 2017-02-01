@@ -8,7 +8,7 @@ import common.tcpCommunication
 class OpenDeviceDialog(wx.Dialog):
     def __init__(self):
         self.corbomiteDevice = None
-        wx.Dialog.__init__(self, None, wx.ID_ANY, 'Open device')
+        wx.Dialog.__init__(self, None, wx.ID_ANY, 'Open device', size =(600, 100))
         self.panel = wx.Panel(self)
         self.vertSizer = wx.BoxSizer(wx.VERTICAL)
 
@@ -34,18 +34,32 @@ class OpenDeviceDialog(wx.Dialog):
         self.serialSizer.Add(self.openSerialButton, 0, wx.ALL)
         self.vertSizer.Add(self.serialSizer, 0, wx.ALL)
 
+        # Bluetooth widgets
+        self.bluetoothSizer = wx.BoxSizer(wx.HORIZONTAL)
+        self.bluetoothLabel = wx.StaticText(self.panel, wx.ID_ANY,
+                                      'Bluetooth device:')
+        self.bluetoothText = wx.TextCtrl(self.panel, value='00:00:00:00:00:00')
+
+        self.openBluetoothButton = wx.Button(self.panel, wx.ID_ANY, 'Open bluetooth')
+        self.openBluetoothButton.Bind(wx.EVT_BUTTON, self.onOpenBluetooth)
+
+        self.vertSizer.Add(self.bluetoothLabel, 2, wx.ALL)
+        self.bluetoothSizer.Add(self.bluetoothText, 3, wx.ALL)
+        self.bluetoothSizer.Add(self.openBluetoothButton, 2, wx.ALL)
+        self.vertSizer.Add(self.bluetoothSizer, 0, wx.ALL)
+
         # TCP widgets
         self.tcpSizer = wx.BoxSizer(wx.HORIZONTAL)
         self.tcpLabel = wx.StaticText(self.panel, wx.ID_ANY,
                                       'TCP Device:')
         self.tcpText = wx.TextCtrl(self.panel, value='127.0.0.1')
 
-        self.openSerialButton = wx.Button(self.panel, wx.ID_ANY, 'Open tcp')
-        self.openSerialButton.Bind(wx.EVT_BUTTON, self.onOpenTcp)
+        self.openTcpButton = wx.Button(self.panel, wx.ID_ANY, 'Open tcp')
+        self.openTcpButton.Bind(wx.EVT_BUTTON, self.onOpenTcp)
 
         self.vertSizer.Add(self.tcpLabel, 0, wx.ALL)
         self.tcpSizer.Add(self.tcpText, 0, wx.ALL)
-        self.tcpSizer.Add(self.openSerialButton, 0, wx.ALL)
+        self.tcpSizer.Add(self.openTcpButton, 0, wx.ALL)
         self.vertSizer.Add(self.tcpSizer, 0, wx.ALL)
 
         # Add open file button
@@ -62,8 +76,16 @@ class OpenDeviceDialog(wx.Dialog):
 
         self.panel.SetSizer(self.vertSizer)
         self.vertSizer.Fit(self)
-
+	self.panel.Fit()
         self.getSerialPortList()
+	self.Fit()
+
+    def onOpenBluetooth(self, fooEvent):
+	addr = self.bluetoothText.GetValue()
+	print "Opening", addr
+	from common.bluetoothIo import BluetoothIo
+	self.port = BluetoothIo(addr)
+	self.EndModal(wx.ID_OK)
 
     def onOpenTcp(self, fooEvent):
         addr = self.tcpText.GetValue()

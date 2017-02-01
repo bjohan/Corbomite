@@ -24,8 +24,12 @@ class CorbomiteWidget:
         self.value = value
 
     def process(self, line):
-        self.readEvent(line)
-        self.callCallbacks(self)
+	try:
+        	self.readEvent(line)
+        	self.callCallbacks(self)
+	except Exception as e:
+		print "Failed to process \"%s\"reason:"%(line)
+		print str(e)
 
     def setValue(self, value):
         self.value.setUnit(value)

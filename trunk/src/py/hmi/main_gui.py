@@ -8,7 +8,6 @@ import serial
 import sys
 from common.tcpCommunication import TcpClient
 
-
 class RootFrame(wx.Frame):
     def __init__(self):
         wx.Frame.__init__(self, None, wx.ID_ANY,
@@ -33,8 +32,12 @@ class RootFrame(wx.Frame):
                     if len(t) > 2:
                         baud = int(t[2])
                     self.openPort(serial.Serial(t[1], baud, timeout=1))
-                else:
+                elif t[0].upper() == "TCP":
                     self.openPort(TcpClient(t[1]))
+		elif t[0].upper() == "BLUETOOTH":
+			print "connecting to", p[10:]
+			from common.bluetoothIo import BluetoothIo
+			self.openPort(BluetoothIo(p[10:]));
 
     def onOpenDevice(self, event):
         self.openDlg = openDeviceDialog.OpenDeviceDialog()
