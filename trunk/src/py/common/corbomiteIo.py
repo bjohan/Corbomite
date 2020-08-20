@@ -54,6 +54,7 @@ class FrameDecoder(FrameInfo):
         if i[0] < i[1]:
             d = self.buf[i[0]+len(self.fs):i[1]-1]
             self.buf = self.buf[i[1]+1:]
+            #print "RX:", d
             return d
 
         self.buf = self.buf[i[1]:]
@@ -86,6 +87,7 @@ class FrameEncoder(FrameInfo):
     def getEncodedData(self):
         d = self.encoded
         self.encoded = ''
+        #print "TX", d
         return d
 
 
@@ -147,19 +149,23 @@ class CorbomiteReadThread(threading.Thread):
 
     def run(self):
         while True:
-            self.m.acquire()
-            if self.exit:
+            try:
+                self.m.acquire()
+                d = self.i.read()
+                if len(d) > 0:
+                    self.fd.addData(d)
+                    for frame in self.fd.getAllFrames():
+                        for callback in self.callbacks:
+                            callback(frame)
+                self.m.release()
+                self.s.release()
+                if self.exit:
+                    break
+            except:
+                print "Exception in read loop"
                 break
-            d = self.i.read()
-            if len(d) > 0:
-                self.fd.addData(d)
-                for frame in self.fd.getAllFrames():
-                    for callback in self.callbacks:
-                        callback(frame)
-            self.m.release()
-            self.s.release()
         print "Readloop exited"
-        self.join()
+        #self.join()
 
     def read(self):
         self.s.acquire()
@@ -173,6 +179,7 @@ class CorbomiteReadThread(threading.Thread):
         self.m.acquire()
         self.exit = True
         self.m.release()
+        self.join()
 
     def __del__(self):
         print "del for reader called"

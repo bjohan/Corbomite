@@ -29,6 +29,7 @@ class CorbomiteClient(common.corbomiteIo.CorbomiteIo):
         print
 
     def __del__(self):
+        common.corbomiteIo.CorbomiteIo.__del__(self)
         print "Del for corbomitedevice called"
         self.reader.stop()
         self.writer.stop()
@@ -36,6 +37,7 @@ class CorbomiteClient(common.corbomiteIo.CorbomiteIo):
     def frameReceiver(self, frame):
         # print "Got %d bytes in frame:" % (len(frame)), frame
         if frame == 'busy':
+            #print "<BUSY>"
             self.busy = True
         elif frame == 'idle':
             if len(self.writeQueue):
@@ -46,6 +48,7 @@ class CorbomiteClient(common.corbomiteIo.CorbomiteIo):
             else:
                 # print "Idle"
                 self.busy = False
+                #print "<IDLE>"
         elif frame.split()[0] == "info":
             w = corbomiteWidgets.CorbomiteWidget.factory(frame[4:], self)
             for i in self.initCallbacks:
@@ -59,8 +62,11 @@ class CorbomiteClient(common.corbomiteIo.CorbomiteIo):
 
     def write(self, writer, data):
         if self.busy:
-            # print "Busy, buffering"
-            self.writeQueue[writer] = data
+             #print "Busy, buffering", data
+             self.writeQueue[writer] = data
         else:
             self.busy = True
+            #print "<BUSY local>", data
             self.writer.write(data)
+            while self.busy:
+                pass
