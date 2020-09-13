@@ -64,7 +64,7 @@ class FrameDecoder(FrameInfo):
         frames = []
         while True:
             frame = self.getFrame()
-            # print "Parsed frame", frame
+            #print "Parsed frame", frame
             if frame is None:
                 break
             frames.append(frame)
@@ -161,8 +161,8 @@ class CorbomiteReadThread(threading.Thread):
                 self.s.release()
                 if self.exit:
                     break
-            except:
-                print "Exception in read loop"
+            except Exception, e:
+                print "Exception in read loop", e
                 break
         print "Readloop exited"
         #self.join()

@@ -21,6 +21,7 @@ class CorbomiteClient(common.corbomiteIo.CorbomiteIo):
                 print "No response after 10 seconds, resending info"
                 self.writer.write("info");
                 t0=time.time()
+                time.sleep(0.1)
         
         print "Done!!"
         print "registered widgets:",
@@ -35,7 +36,7 @@ class CorbomiteClient(common.corbomiteIo.CorbomiteIo):
         self.writer.stop()
 
     def frameReceiver(self, frame):
-        # print "Got %d bytes in frame:" % (len(frame)), frame
+        #print "Got %d bytes in frame:" % (len(frame)), frame
         if frame == 'busy':
             #print "<BUSY>"
             self.busy = True
