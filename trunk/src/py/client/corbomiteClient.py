@@ -12,9 +12,10 @@ class CorbomiteClient(common.corbomiteIo.CorbomiteIo):
         self.writeQueue = {}
         self.widgets = OrderedDict()
         print "Sending info"
+	time.sleep(2);
         self.writer.write("info")
         t0= time.time();
-        time.sleep(2)
+        #time.sleep(1)
         print "Waiting for data..."
         while self.busy:
             if time.time()-t0 > 10:
